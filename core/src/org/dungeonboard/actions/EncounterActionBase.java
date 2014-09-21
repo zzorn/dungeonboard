@@ -2,7 +2,6 @@ package org.dungeonboard.actions;
 
 import com.badlogic.gdx.graphics.Color;
 import org.dungeonboard.World;
-import org.dungeonboard.actions.changes.WorldChange;
 import org.dungeonboard.model.Encounter;
 import org.dungeonboard.model.GameCharacter;
 
@@ -19,10 +18,20 @@ public abstract class EncounterActionBase extends GameActionBase implements Enco
         super(name, color);
     }
 
-    @Override public final void doAction(World world, GameCharacter character, Encounter encounter) {
-        final WorldChange change = createChange(character, encounter);
-        world.applyChange(change);
+    @Override public final boolean isAvailable(World world) {
+        final Encounter currentEncounter = world.getCurrentEncounter();
+        final GameCharacter selectedCharacter = currentEncounter.getSelectedCharacter();
+
+        return availableFor(selectedCharacter,
+                            currentEncounter,
+                            selectedCharacter != null && currentEncounter.getCurrentCharacter() == selectedCharacter,
+                            selectedCharacter != null && selectedCharacter.isTurnUsed(),
+                            currentEncounter.isBetweenTurns());
     }
 
-    protected abstract WorldChange createChange(GameCharacter character, Encounter encounter);
+    @Override public final void doAction(World world) {
+        final Encounter currentEncounter = world.getCurrentEncounter();
+        doAction(world, currentEncounter.getSelectedCharacter(), currentEncounter);
+
+    }
 }

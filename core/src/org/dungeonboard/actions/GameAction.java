@@ -20,4 +20,10 @@ public interface GameAction {
      */
     Color getColor();
 
+    /**
+     * @return true if the action can be done with the current world state.
+     */
+    boolean isAvailable(World world);
+
+    void doAction(World world);
 }

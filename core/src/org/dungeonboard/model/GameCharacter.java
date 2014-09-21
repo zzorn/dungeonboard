@@ -1,20 +1,38 @@
 package org.dungeonboard.model;
 
 import com.badlogic.gdx.graphics.Color;
-import org.dungeonboard.storage.Entity;
+import org.dungeonboard.StyleSettings;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  */
-public abstract class GameCharacter extends Entity {
+public abstract class GameCharacter  {
 
     private String name;
     private Color color;
 
-    private int initiative;
+    private int initiative = 20;
     private int disabledForRounds = 0;
     private boolean turnUsed;
     private boolean inReadyAction = false;
+
+    private List<CharacterListener> listeners = new ArrayList<CharacterListener>();
+
+    protected GameCharacter() {
+        this("Character");
+    }
+
+    protected GameCharacter(String name) {
+        this(name, StyleSettings.DEFAULT_NAME_COLOR.cpy());
+    }
+
+    protected GameCharacter(String name, Color color) {
+        this.name = name;
+        this.color = color;
+    }
 
     public String getName() {
         return name;
@@ -22,6 +40,7 @@ public abstract class GameCharacter extends Entity {
 
     public void setName(String name) {
         this.name = name;
+        onChanged();
     }
 
     public Color getColor() {
@@ -30,6 +49,7 @@ public abstract class GameCharacter extends Entity {
 
     public void setColor(Color color) {
         this.color = color;
+        onChanged();
     }
 
     public int getInitiative() {
@@ -38,6 +58,7 @@ public abstract class GameCharacter extends Entity {
 
     public void setInitiative(int initiative) {
         this.initiative = initiative;
+        onChanged();
     }
 
     public boolean isDisabled() {
@@ -54,14 +75,17 @@ public abstract class GameCharacter extends Entity {
 
     public void setDisabledForRounds(int rounds) {
         disabledForRounds = rounds;
+        onChanged();
     }
 
     public void setDisabled() {
         disabledForRounds = -1;
+        onChanged();
     }
 
     public void setEnabled() {
         disabledForRounds = 0;
+        onChanged();
     }
 
 
@@ -75,6 +99,7 @@ public abstract class GameCharacter extends Entity {
 
     public void setTurnUsed(boolean turnUsed) {
         this.turnUsed = turnUsed;
+        onChanged();
     }
 
     public boolean isInReadyAction() {
@@ -83,6 +108,7 @@ public abstract class GameCharacter extends Entity {
 
     public void setInReadyAction(boolean inReadyAction) {
         this.inReadyAction = inReadyAction;
+        onChanged();
     }
 
     public void onNewRound() {
@@ -91,6 +117,8 @@ public abstract class GameCharacter extends Entity {
 
         // Decrease disabled timer
         if (disabledForRounds > 0) disabledForRounds--;
+
+        onChanged();
     }
 
     public void onTurn() {
@@ -99,4 +127,22 @@ public abstract class GameCharacter extends Entity {
     }
 
     public abstract boolean isPlayerCharacter();
+
+    public void changeInitiative(int change) {
+        initiative += change;
+
+        onChanged();
+    }
+
+    public final void addListener(CharacterListener listener) {
+        listeners.add(listener);
+    }
+    public final void removeListener(CharacterListener listener) {
+        listeners.remove(listener);
+    }
+    protected void onChanged() {
+        for (CharacterListener listener : listeners) {
+            listener.onChanged(this);
+        }
+    }
 }

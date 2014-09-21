@@ -1,6 +1,5 @@
 package org.dungeonboard.model;
 
-import org.dungeonboard.storage.Entity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +7,7 @@ import java.util.List;
 /**
  * Group of players on an adventure.
  */
-public class Party extends Entity {
+public class Party  {
 
     private final List<PlayerCharacter> playerCharacters = new ArrayList<PlayerCharacter>();
 
