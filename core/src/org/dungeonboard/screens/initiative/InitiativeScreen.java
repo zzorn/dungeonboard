@@ -431,6 +431,7 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 character.changeInitiative(-POINTS_ABOVE_NEXT_TO_GET_FREE_TURN);
                 character.setTurnUsed(false);
+                encounter.setExtraTurnInitiativeDropUsed(true);
                 encounter.stepToNextTurn();
             }
         });
