@@ -14,6 +14,7 @@ public class StyleSettings {
     public static final Color DEFAULT_NAME_COLOR = new Color(1f, 0.9f, 0.8f, 1f);
 
     public static final int NUMBER_OF_ROWS_OF_DIALOG_TEXT_TO_FIT_ON_SCREEN = 17;
+    public static final int NUMBER_OF_ROWS_OF_LARGE_DIALOG_TEXT_TO_FIT_ON_SCREEN = 12;
     public static final int NUMBER_OF_ROWS_OF_SCRIPT_TEXT_TO_FIT_ON_SCREEN = 14;
 
     public static final String DIALOG_FONT_NAME = "135atom_sans";
@@ -28,7 +29,7 @@ public class StyleSettings {
 
     public static void playButtonPressSound() {
         getClickSound().play(0.5f);
-        Gdx.input.vibrate(150);
+        Gdx.input.vibrate(200);
     }
 
     private static Sound getClickSound() {

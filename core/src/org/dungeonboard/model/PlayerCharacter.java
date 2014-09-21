@@ -11,7 +11,7 @@ public class PlayerCharacter extends GameCharacter {
     }
 
     public PlayerCharacter(String name) {
-        super(name);
+        super(name, Color.WHITE);
     }
 
     public PlayerCharacter(String name, Color color) {

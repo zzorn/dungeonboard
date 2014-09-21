@@ -66,7 +66,7 @@ public class Main extends ApplicationAdapter {
         // Load skin with custom sized font
         skin = new Skin(new TextureAtlas(Gdx.files.internal("skins/uiskin.atlas")));
         final BitmapFont dialogFont = createFont("fonts/"+ StyleSettings.DIALOG_FONT_NAME +".ttf", height / StyleSettings.NUMBER_OF_ROWS_OF_DIALOG_TEXT_TO_FIT_ON_SCREEN);
-        final BitmapFont dialogLargeFont = createFont("fonts/"+ StyleSettings.DIALOG_FONT_NAME +".ttf", height / StyleSettings.NUMBER_OF_ROWS_OF_SCRIPT_TEXT_TO_FIT_ON_SCREEN);
+        final BitmapFont dialogLargeFont = createFont("fonts/"+ StyleSettings.DIALOG_FONT_NAME +".ttf", height / StyleSettings.NUMBER_OF_ROWS_OF_LARGE_DIALOG_TEXT_TO_FIT_ON_SCREEN);
         final BitmapFont scriptFont = createFont("fonts/"+ StyleSettings.SCRIPT_FONT_NAME +".ttf", height / StyleSettings.NUMBER_OF_ROWS_OF_SCRIPT_TEXT_TO_FIT_ON_SCREEN);
         skin.add(StyleSettings.DIALOG_FONT, dialogFont, BitmapFont.class);
         skin.add(StyleSettings.DIALOG_LARGE_FONT, dialogLargeFont, BitmapFont.class);
