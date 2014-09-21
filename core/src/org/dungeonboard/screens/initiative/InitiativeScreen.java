@@ -36,7 +36,7 @@ public class InitiativeScreen extends UiScreenBase {
     private Map<GameCharacter, Table> characterToRowMapping = new HashMap<GameCharacter, Table>();
 
     public InitiativeScreen(World world) {
-        super(world, "DungeonBoard");
+        super(world, "Dunskulauta");
     }
 
     @Override protected Actor createContent(Skin skin, final World world) {

@@ -110,7 +110,7 @@ public abstract class UiScreenBase implements UiScreen {
         buttonScroll.setFadeScrollBars(true);
         buttonScroll.setScrollingDisabled(false, true);
         buttonScroll.setupFadeScrollBars(0, 0);
-        rootTable.add(buttonScroll).left().expandX();
+        rootTable.add(buttonScroll).left().padBottom(heightPc*1).expandX();
 
         return rootTable;
     }
@@ -129,6 +129,9 @@ public abstract class UiScreenBase implements UiScreen {
     }
 
     protected void addAction(final GameAction gameAction) {
+        final int height = Gdx.graphics.getHeight();
+        final float heightPc = height * 0.01f;
+
         if (!actions.contains(gameAction)) {
             actions.add(gameAction);
             final TextButton button = new TextButton("   " + gameAction.getName() + "   ", skin);
@@ -149,7 +152,8 @@ public abstract class UiScreenBase implements UiScreen {
             }
             */
 
-            buttonArea.add(button).left().padTop(5).padBottom(5).fillX();
+            buttonArea.add(button).left().padTop(3).padBottom(3).fillX();
+
 
             buttonsForActions.put(gameAction, button);
 
