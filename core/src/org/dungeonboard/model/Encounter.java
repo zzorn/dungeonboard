@@ -64,12 +64,12 @@ public class Encounter  {
             character.removeListener(characterListener);
             characters.remove(character);
 
-            if (currentCharacter == character) {
-                stepToNextTurn();
+            if (selectedCharacter == character) {
+                selectedCharacter = null;
             }
 
-            if (selectedCharacter == character) {
-                selectedCharacter = currentCharacter;
+            if (currentCharacter == character) {
+                stepToNextTurn();
             }
 
             // TODO: Fix Kludge to avoid concurrent edition.

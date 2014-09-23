@@ -13,7 +13,7 @@ public class StyleSettings {
 
     public static final Color DEFAULT_NAME_COLOR = new Color(1f, 0.9f, 0.8f, 1f);
 
-    public static final int NUMBER_OF_ROWS_OF_DIALOG_TEXT_TO_FIT_ON_SCREEN = 17;
+    public static final int NUMBER_OF_ROWS_OF_DIALOG_TEXT_TO_FIT_ON_SCREEN = 19;
     public static final int NUMBER_OF_ROWS_OF_LARGE_DIALOG_TEXT_TO_FIT_ON_SCREEN = 16;
     public static final int NUMBER_OF_ROWS_OF_SCRIPT_TEXT_TO_FIT_ON_SCREEN = 16;
 
