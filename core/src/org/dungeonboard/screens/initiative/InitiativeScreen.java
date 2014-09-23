@@ -3,12 +3,13 @@ package org.dungeonboard.screens.initiative;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.NinePatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.*;
 import org.dungeonboard.StyleSettings;
 import org.dungeonboard.World;
 import org.dungeonboard.actions.EncounterActionBase;
@@ -27,6 +28,7 @@ public class InitiativeScreen extends UiScreenBase {
 
     private static final int POINTS_ABOVE_NEXT_TO_GET_FREE_TURN = 10;
     public static final Color BETWEEN_TURNS_COLOR = new Color(0.8f, 0.8f, 0.3f, 1f);
+    private final TextureAtlas textureAtlas;
     private Table actorList;
     private Skin skin;
 
@@ -34,33 +36,53 @@ public class InitiativeScreen extends UiScreenBase {
     private boolean updateFromCharChanges = true;
 
     private Map<GameCharacter, Table> characterToRowMapping = new HashMap<GameCharacter, Table>();
+    private Drawable glowBackgroundDrawable;
+    private Drawable boxBackgroundDrawable;
+    private Drawable splatterBackgroundDrawable;
+    private Label headerText;
 
-    public InitiativeScreen(World world) {
+    public InitiativeScreen(World world, TextureAtlas textureAtlas) {
         super(world, "Dunskulauta");
+        this.textureAtlas = textureAtlas;
     }
 
     @Override protected Actor createContent(Skin skin, final World world) {
         this.skin = skin;
 
+        glowBackgroundDrawable = new TextureRegionDrawable(textureAtlas.findRegion("selection_glow"));
+        boxBackgroundDrawable = new NinePatchDrawable(textureAtlas.createPatch("selection_outline"));
+        splatterBackgroundDrawable = new TiledDrawable(textureAtlas.findRegion("splatter"));
+
+        final float heightPc = Gdx.graphics.getHeight() * 0.01f;
+        final float widthPc = Gdx.graphics.getWidth() * 0.01f;
+
         // Frame
         Table frame = new Table(skin);
 
+        // Top bar with round number
+        Table topBar = new Table(skin);
+        frame.add(topBar).top().expandX().padBottom(heightPc * 0.5f);
+        headerText = new Label(" ", skin);
+        headerText.setColor(new Color(0.7f, 0.6f, 0.5f, 1f));
+        topBar.add(headerText);
+        frame.row();
+
         // List of actors
         actorList = new Table(skin);
-        actorList.pad(10).defaults().expandX().space(4);
 
         final ScrollPane scroll = new ScrollPane(actorList, skin);
         //scroll.setColor(new Color(0.3f, 0.25f, 0.2f, 1f));
         scroll.setColor(Color.BLACK);
+        /*
         InputListener stopTouchDown = new InputListener() {
             public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
                 event.stop();
                 return false;
             }
         };
+        */
 
-        final float widthPc = Gdx.graphics.getWidth() * 0.01f;
-        frame.add(scroll).expand().padLeft(widthPc*2).padRight(widthPc*2).fill();
+        frame.add(scroll).expand().fill();
 
         frame.row().padTop(Gdx.graphics.getHeight() * 0.02f);
 
@@ -71,13 +93,13 @@ public class InitiativeScreen extends UiScreenBase {
         final TextField initiativeEditor = new TextField("", skin);
         initiativeEditor.setMaxLength(3);
        // initiativeEditor.setTextFieldFilter(new TextField.TextFieldFilter.DigitsOnlyFilter());
-        header.add(createInitiativeModButton(skin, -10));
-        header.add(createInitiativeModButton(skin, -5));
-        header.add(createInitiativeModButton(skin, -1));
-        header.add(initiativeEditor);
-        header.add(createInitiativeModButton(skin, +1));
-        header.add(createInitiativeModButton(skin, +5));
-        header.add(createInitiativeModButton(skin, +10));
+        header.add(createInitiativeModButton(skin, -10, new Color(0.5f, 0.5f, 1f, 1)));
+        header.add(createInitiativeModButton(skin, -5, new Color(0.6f, 0.6f, 1f, 1)));
+        header.add(createInitiativeModButton(skin, -1, new Color(0.7f, 0.7f, 1f, 1)));
+        header.add(initiativeEditor).width(widthPc * 10).center();
+        header.add(createInitiativeModButton(skin, +1, new Color(1f, 0.7f, 0.7f, 1)));
+        header.add(createInitiativeModButton(skin, +5, new Color(1f, 0.6f, 0.6f, 1)));
+        header.add(createInitiativeModButton(skin, +10, new Color(1f, 0.5f, 0.5f, 1)));
 
         frame.add(header).expandX().fill();
 
@@ -85,22 +107,10 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void onChanged(GameCharacter character) {
                 updateSelectionAreaBar(character, nameEditor, initiativeEditor);
             }
-        };
 
-        world.getCurrentEncounter().addListener(new EncounterListenerAdapter() {
-            @Override public void onSelectionChanged(Encounter encounter, GameCharacter character) {
-                if (character != selectedCharacter) {
-
-                    if (selectedCharacter != null) selectedCharacter.removeListener(characterListener);
-
-                    selectedCharacter = character;
-
-                    if (selectedCharacter != null) selectedCharacter.addListener(characterListener);
-
-                    updateSelectionAreaBar(character, nameEditor, initiativeEditor);
-                }
+            @Override public void onInitiativeChanged(GameCharacter character) {
             }
-        });
+        };
 
         // Listen to name field
         nameEditor.addListener(new InputListener() {
@@ -166,7 +176,7 @@ public class InitiativeScreen extends UiScreenBase {
         initCharacterList(world);
 
 
-        // Listen to characters added or removed from encounter
+        // Listen to encounter
         world.getCurrentEncounter().addListener(new EncounterListenerAdapter() {
             @Override public void onCharacterAdded(Encounter encounter, GameCharacter character) {
                 addCharacter(character);
@@ -180,10 +190,28 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void onTurnChanged(Encounter encounter) {
                 refreshActionButtons();
                 resortCharList();
+                updateHeaderText(encounter);
             }
 
-            @Override public void onSelectionChanged(Encounter encounter, GameCharacter selectedCharacter) {
-                refreshActionButtons();
+            @Override public void onSelectionChanged(Encounter encounter, GameCharacter character) {
+                if (character != selectedCharacter) {
+
+                    if (selectedCharacter != null) selectedCharacter.removeListener(characterListener);
+
+                    selectedCharacter = character;
+
+                    if (selectedCharacter != null) selectedCharacter.addListener(characterListener);
+
+                    updateSelectionAreaBar(character, nameEditor, initiativeEditor);
+
+                    refreshActionButtons();
+                }
+            }
+
+
+            @Override public void onInitiativeChanged(Encounter encounter) {
+                System.out.println("InitiativeScreen.onInitiativeChanged");
+                resortCharList();
             }
         });
 
@@ -192,7 +220,24 @@ public class InitiativeScreen extends UiScreenBase {
 
         setupActions();
 
+        updateHeaderText(world.getCurrentEncounter());
+
         return frame;
+    }
+
+    private void updateHeaderText(Encounter encounter) {
+        final int round = encounter.getRoundNumber();
+        if (encounter.isBetweenTurns()) {
+            if (round == 0) {
+                headerText.setText("Battle Starting");
+            }
+            else {
+                headerText.setText("Before Round " + (round + 1));
+            }
+        }
+        else {
+            headerText.setText("Round " + round);
+        }
     }
 
     private void resortCharList() {
@@ -208,12 +253,14 @@ public class InitiativeScreen extends UiScreenBase {
         }
     }
 
-    private TextButton createInitiativeModButton(Skin skin, final int change) {
+    private TextButton createInitiativeModButton(Skin skin, final int change, Color color) {
         final TextButton initiativeMod = new TextButton(" " + (change > 0 ? "+" : "") +change + " ", skin);
+        initiativeMod.setColor(color);
         initiativeMod.addListener(new ClickListener(){
             @Override public void clicked(InputEvent event, float x, float y) {
                 if (selectedCharacter != null) {
                     selectedCharacter.changeInitiative(change);
+                    StyleSettings.playButtonPressSound();
                 }
             }
         });
@@ -250,12 +297,14 @@ public class InitiativeScreen extends UiScreenBase {
 
     private void addCharacter(final GameCharacter gameCharacter) {
 
+        final float widthPc = Gdx.graphics.getWidth() * 0.01f;
+
         final Table characterRow = new Table(skin);
 
         // Name
         final String name = gameCharacter.getName();
         final Label nameLabel = new Label(name, skin, StyleSettings.SCRIPT_FONT, StyleSettings.DEFAULT_NAME_COLOR);
-        characterRow.add(nameLabel).left().expandX().fillX();
+        characterRow.add(nameLabel).left().padLeft(widthPc * 3).expandX().fillX();
 
         //slider.addListener(stopTouchDown); // Stops touchDown events from propagating to the FlickScrollPane.
 
@@ -266,7 +315,7 @@ public class InitiativeScreen extends UiScreenBase {
 
         // Ready action button
         final TextButton readyButton = new TextButton("Ready", skin);
-        characterRow.add(readyButton).padLeft(8).right();
+        characterRow.add(readyButton).padLeft(8).padRight(widthPc * 2).right();
         readyButton.addListener(new ClickListener(){
             @Override public void clicked(InputEvent event, float x, float y) {
                 getWorld().getCurrentEncounter().setCurrentCharacter(gameCharacter);
@@ -295,6 +344,9 @@ public class InitiativeScreen extends UiScreenBase {
                 // Update coloring
                 updateInitiativeRowColoring(characterRow, nameLabel, initiativeLabel, readyButton, gameCharacter);
             }
+
+            @Override public void onInitiativeChanged(GameCharacter character) {
+            }
         });
 
         getWorld().getCurrentEncounter().addListener(new EncounterListenerAdapter() {
@@ -322,7 +374,7 @@ public class InitiativeScreen extends UiScreenBase {
     private void updateInitiativeRowColoring(Table row,
                                              Label name,
                                              Label initiative,
-                                             Button readyButton,
+                                             TextButton readyButton,
                                              GameCharacter character) {
         final Encounter currentEncounter = getWorld().getCurrentEncounter();
         boolean selected = currentEncounter.getSelectedCharacter() == character;
@@ -332,34 +384,56 @@ public class InitiativeScreen extends UiScreenBase {
         boolean hasDoneTurn = character.isTurnUsed();
 
         readyButton.setVisible(hasReadyAction);
-        readyButton.setColor(Color.RED);
+        if (hasReadyAction) {
+            readyButton.setColor(Color.RED);
+            readyButton.setDisabled(false);
+            readyButton.setText("Ready");
+        }
+
+
+        row.setBackground("white");
+        row.setColor(Color.BLACK);
 
         // Turn done
-        name.setColor(new Color(0.45f, 0.37f, 0.28f, 1));
+        name.setColor(new Color(0.55f, 0.45f, 0.3f, 1));
         initiative.setColor(new Color(0.5f,0.5f,0.5f,1));
 
         if (!hasDoneTurn) {
-            name.setColor(new Color(0.7f, 0.6f, 0.5f, 1));
-            initiative.setColor(new Color(0.8f,0.8f,0.8f,1));
-        }
-
-        if (selected) {
-            name.setColor(new Color(0.65f, 0.7f, 0.97f, 1));
+            name.setColor(new Color(0.9f, 0.8f, 0.7f, 1));
+            initiative.setColor(new Color(0.9f,0.9f,0.9f,1));
         }
 
         if (inTurn) {
-            name.setColor(new Color(1f, 0.93f, 0.85f, 1));
-            initiative.setColor(new Color(1,1,1,1));
+            row.setBackground(glowBackgroundDrawable);
+            row.setColor(StyleSettings.IN_TURN_NAME_BACKGROUND);
+            name.setColor(StyleSettings.IN_TURN_NAME_COLOR);
+            initiative.setColor(new Color(1, 1, 1, 1));
         }
 
         if (disabled) {
-            name.setColor(new Color(0.4f, 0.05f, 0.05f, 1).lerp(name.getColor(), 0.5f));
-            initiative.setColor(new Color(0.6f,0.2f,0.2f,1));
+            row.setBackground(splatterBackgroundDrawable);
+            row.setColor(new Color(0.3f, 0.3f, 0.3f, 1));
+
+            /*
+            readyButton.setVisible(true);
+            readyButton.setColor(Color.GRAY);
+            readyButton.setDisabled(true);
+            readyButton.setText("Disabled");
+            */
+
+            name.setColor(new Color(0.5f, 0.5f, 0.5f, 1));
+            initiative.setColor(new Color(0.4f, 0.4f, 0.4f, 1));
+        }
+
+        if (selected && !inTurn) {
+            row.setBackground(boxBackgroundDrawable);
+            row.setColor(StyleSettings.SELECTED_NAME_BACKGROUND);
+            //name.setColor(StyleSettings.SELECTED_NAME_COLOR);
         }
 
         if (!character.isPlayerCharacter()) {
-            initiative.setColor(new Color(0, 0.8f, 0, 1).lerp(initiative.getColor(), 0.7f));
-            name.setColor(new Color(0, 0.8f, 0, 1).lerp(name.getColor(), 0.7f));
+            initiative.setColor(new Color(StyleSettings.MONSTER_COLOR).lerp(initiative.getColor(), 0.7f));
+            name.setColor(new Color(StyleSettings.MONSTER_COLOR).lerp(name.getColor(), 0.7f));
         }
 
         //if (selected) row.setColor(new Color(0.3f, 0.4f, 0.5f, 1));
@@ -383,7 +457,7 @@ public class InitiativeScreen extends UiScreenBase {
     public void setupActions() {
 
         // Done
-        addAction(new EncounterActionBase("  Done  ", Color.GREEN) {
+        addAction(new EncounterActionBase("    Done    ", Color.GREEN) {
             @Override public boolean availableFor(GameCharacter character,
                                                   Encounter encounter,
                                                   boolean hasTurn,
@@ -396,10 +470,10 @@ public class InitiativeScreen extends UiScreenBase {
                 character.setTurnUsed(true);
                 encounter.stepToNextTurn();
             }
-        });
+        }, true, false);
 
         // Round done
-        addAction(new EncounterActionBase("Next Round", new Color(0.5f, 1f, 0, 1)) {
+        addAction(new EncounterActionBase("Next Round", new Color(1f, 1f, 0, 1)) {
             @Override public boolean availableFor(GameCharacter character,
                                                   Encounter encounter,
                                                   boolean hasTurn,
@@ -411,7 +485,22 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 encounter.stepToNextTurn();
             }
-        });
+        }, true, false);
+
+        // Select active character
+        addAction(new EncounterActionBase("Resume", new Color(0.3f, 0.6f, 0.9f, 1)) {
+            @Override public boolean availableFor(GameCharacter character,
+                                                  Encounter encounter,
+                                                  boolean hasTurn,
+                                                  boolean turnUsed,
+                                                  boolean betweenRounds) {
+                return !hasTurn && !betweenRounds;
+            }
+
+            @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
+                encounter.setSelectedCharacter(encounter.getCurrentCharacter());
+            }
+        }, true, false);
 
         // Free turn
         addAction(new EncounterActionBase("Drop "+POINTS_ABOVE_NEXT_TO_GET_FREE_TURN+" and act again") {
@@ -434,10 +523,10 @@ public class InitiativeScreen extends UiScreenBase {
                 encounter.setExtraTurnInitiativeDropUsed(true);
                 encounter.stepToNextTurn();
             }
-        });
+        }, false, false);
 
         // Prepare ready action
-        addAction(new EncounterActionBase("Ready for Action") {
+        addAction(new EncounterActionBase("Ready", new Color(1, 0, 0, 1)) {
             @Override public boolean availableFor(GameCharacter character,
                                                   Encounter encounter,
                                                   boolean hasTurn,
@@ -452,7 +541,7 @@ public class InitiativeScreen extends UiScreenBase {
                 encounter.stepToNextTurn();
                 character.setInReadyAction(true);
             }
-        });
+        }, false, false);
 
         /*
         // Use ready action
@@ -486,7 +575,7 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 character.setDisabled();
             }
-        });
+        }, false, false);
 
         // Enable
         addAction(new EncounterActionBase("Enable") {
@@ -502,10 +591,10 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 character.setEnabled();
             }
-        });
+        }, false, false);
 
         // Add character
-        addAction(new EncounterActionBase("Add PC", Color.OLIVE) {
+        addAction(new EncounterActionBase("Add PC", new Color(0.8f, 0.7f, 0.3f, 1)) {
             @Override public boolean availableFor(GameCharacter character,
                                                   Encounter encounter,
                                                   boolean hasTurn,
@@ -517,10 +606,10 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 encounter.addCharacter(new PlayerCharacter("Adventurer"));
             }
-        });
+        }, false, true);
 
         // Add others
-        addAction(new EncounterActionBase("Add Others", Color.OLIVE) {
+        addAction(new EncounterActionBase("Add Others", new Color(0.3f, 0.8f, 0.6f, 1)) {
             @Override public boolean availableFor(GameCharacter character,
                                                   Encounter encounter,
                                                   boolean hasTurn,
@@ -532,7 +621,23 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 encounter.addCharacter(new NonPlayerCharacters("Others"));
             }
-        });
+        }, false, true);
+
+        // Reset encounter
+        addAction(new EncounterActionBase("Reset", new Color(0.6f, 0f, 0.6f, 1f)) {
+            @Override public boolean availableFor(GameCharacter character,
+                                                  Encounter encounter,
+                                                  boolean hasTurn,
+                                                  boolean turnUsed,
+                                                  boolean betweenRounds) {
+
+                return true;
+            }
+
+            @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
+                encounter.reset();
+            }
+        }, false, true);
 
         // Remove
         addAction(new EncounterActionBase("Remove", new Color(0.6f, 0, 0, 1f)) {
@@ -548,7 +653,7 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 encounter.removeCharacter(character);
             }
-        });
+        }, false, true);
 
 
     }

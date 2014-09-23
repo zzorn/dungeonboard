@@ -18,4 +18,7 @@ public class EncounterListenerAdapter implements EncounterListener {
 
     @Override public void onSelectionChanged(Encounter encounter, GameCharacter selectedCharacter) {
     }
+
+    @Override public void onInitiativeChanged(Encounter encounter) {
+    }
 }

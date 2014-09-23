@@ -12,4 +12,6 @@ public interface EncounterListener {
     void onCharacterRemoved(Encounter encounter, GameCharacter character);
 
     void onSelectionChanged(Encounter encounter, GameCharacter selectedCharacter);
+
+    void onInitiativeChanged(Encounter encounter);
 }

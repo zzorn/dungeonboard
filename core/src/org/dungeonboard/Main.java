@@ -31,6 +31,8 @@ public class Main extends ApplicationAdapter {
     private Skin skin;
     private AssetManager assetManager;
 
+    private TextureAtlas textureAtlas;
+
 
     private UiScreen currentScreen;
 
@@ -55,6 +57,9 @@ public class Main extends ApplicationAdapter {
         final int height = Gdx.graphics.getHeight();
         final float heightPc = height * 0.01f;
         final float widthPc = width * 0.01f;
+
+        // Load textures
+        textureAtlas = new TextureAtlas("textures/textures.atlas");
 
 
         // Stage
@@ -169,7 +174,7 @@ public class Main extends ApplicationAdapter {
         world.getCurrentEncounter().addCharacter(new PlayerCharacter("Oscaaar", Color.CYAN));
         world.getCurrentEncounter().addCharacter(new PlayerCharacter("Cthulhu", Color.GREEN));
         */
-        InitiativeScreen initiativeScreen = new InitiativeScreen(world);
+        InitiativeScreen initiativeScreen = new InitiativeScreen(world, textureAtlas);
         setScreen(initiativeScreen);
 
     }

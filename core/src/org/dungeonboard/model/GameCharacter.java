@@ -58,7 +58,7 @@ public abstract class GameCharacter  {
 
     public void setInitiative(int initiative) {
         this.initiative = initiative;
-        onChanged();
+        onInitiativeChanged();
     }
 
     public boolean isDisabled() {
@@ -80,6 +80,7 @@ public abstract class GameCharacter  {
 
     public void setDisabled() {
         disabledForRounds = -1;
+        inReadyAction = false;
         onChanged();
     }
 
@@ -131,18 +132,35 @@ public abstract class GameCharacter  {
     public void changeInitiative(int change) {
         initiative += change;
 
-        onChanged();
+        onInitiativeChanged();
     }
 
     public final void addListener(CharacterListener listener) {
         listeners.add(listener);
     }
+
     public final void removeListener(CharacterListener listener) {
         listeners.remove(listener);
     }
+
     protected void onChanged() {
         for (CharacterListener listener : listeners) {
             listener.onChanged(this);
         }
+    }
+
+    protected void onInitiativeChanged() {
+        onChanged();
+
+        for (CharacterListener listener : listeners) {
+            listener.onInitiativeChanged(this);
+        }
+    }
+
+    public void reset() {
+        disabledForRounds = 0;
+        turnUsed = false;
+        inReadyAction = false;
+        onChanged();
     }
 }

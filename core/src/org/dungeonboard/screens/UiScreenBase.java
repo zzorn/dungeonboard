@@ -1,7 +1,6 @@
 package org.dungeonboard.screens;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -9,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import org.dungeonboard.StyleSettings;
 import org.dungeonboard.World;
 import org.dungeonboard.actions.GameAction;
+import org.dungeonboard.utils.ActionButton;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,9 +30,13 @@ public abstract class UiScreenBase implements UiScreen {
     private boolean active;
     private Skin skin;
     private Actor actor;
-    private Table buttonArea;
+    private Table largeButtonArea;
+    private Table firstRowButtonArea;
+    private Table secondRowButtonArea;
 
-    private List<GameAction> actions = new ArrayList<GameAction>();
+    private List<GameAction> largeActions = new ArrayList<GameAction>();
+    private List<GameAction> firstRowActions = new ArrayList<GameAction>();
+    private List<GameAction> secondRowActions = new ArrayList<GameAction>();
 
     private final Map<GameAction, TextButton> buttonsForActions = new HashMap<GameAction, TextButton>();
 
@@ -94,23 +98,40 @@ public abstract class UiScreenBase implements UiScreen {
 
         rootTable.row();
 
+        // Buttons
+        Table buttonArea = new Table(skin);
+        largeButtonArea = new Table(skin);
+        buttonArea.add(largeButtonArea).left();
 
-        buttonArea = new Table(skin);
+        Table buttonRows = new Table(skin);
+        firstRowButtonArea = new Table(skin);
+        secondRowButtonArea = new Table(skin);
+        buttonRows.add(firstRowButtonArea).left().top().expand();
+        buttonRows.row();
+        buttonRows.add(secondRowButtonArea).left().bottom().expand();
+        buttonArea.add(buttonRows).left().bottom().expand();
 
 
-        // Content
+        // Create content
         final Actor content = createContent(this.skin, world);
         rootTable.add(content).expand().fill();
 
-        // Action buttons
+        // Add action buttons below content
         rootTable.row();
+        rootTable.add(buttonArea).left().padBottom(heightPc * 1).expandX();
+
+        /*
         ScrollPane buttonScroll = new ScrollPane(buttonArea, skin);
         buttonScroll.setColor(Color.BLACK);
         buttonScroll.setFlickScroll(true);
         buttonScroll.setFadeScrollBars(true);
         buttonScroll.setScrollingDisabled(false, true);
         buttonScroll.setupFadeScrollBars(0, 0);
-        rootTable.add(buttonScroll).left().padBottom(heightPc*1).expandX();
+        rootTable.add(buttonScroll).left().padBottom(heightPc * 1).expandX();
+        */
+
+
+        refreshActionButtons();
 
         return rootTable;
     }
@@ -128,13 +149,20 @@ public abstract class UiScreenBase implements UiScreen {
         return world;
     }
 
-    protected void addAction(final GameAction gameAction) {
+    protected void addAction(final GameAction gameAction, boolean large, boolean rowTwo) {
         final int height = Gdx.graphics.getHeight();
         final float heightPc = height * 0.01f;
 
+        // Select place
+        final List<GameAction> actions;
+        if (large) actions = largeActions;
+        else if (rowTwo) actions = secondRowActions;
+        else actions = firstRowActions;
+
+        // Add
         if (!actions.contains(gameAction)) {
             actions.add(gameAction);
-            final TextButton button = new TextButton("   " + gameAction.getName() + "   ", skin);
+            final TextButton button = new ActionButton("   " + gameAction.getName() + "   ", skin, large);
             button.setColor(gameAction.getColor());
             button.addListener(new ClickListener() {
                 @Override public void clicked(InputEvent event, float x, float y) {
@@ -152,8 +180,7 @@ public abstract class UiScreenBase implements UiScreen {
             }
             */
 
-            buttonArea.add(button).left().padTop(3).padBottom(3).fillX();
-
+            //buttonArea.add(button).left().padTop(3).padBottom(3).fillX();
 
             buttonsForActions.put(gameAction, button);
 
@@ -162,14 +189,17 @@ public abstract class UiScreenBase implements UiScreen {
     }
 
     protected void removeAction(GameAction gameAction) {
-        if (actions.contains(gameAction)) {
+        // Remove from lists
+        largeActions.remove(gameAction);
+        firstRowActions.remove(gameAction);
+        secondRowActions.remove(gameAction);
 
-            // Remove from list
-            actions.remove(gameAction);
-
-            // Remove from ui
-            final TextButton button = buttonsForActions.get(gameAction);
-            buttonArea.removeActor(button);
+        // Remove from ui
+        final TextButton button = buttonsForActions.get(gameAction);
+        if (button != null) {
+            largeButtonArea.removeActor(button);
+            firstRowButtonArea.removeActor(button);
+            secondRowButtonArea.removeActor(button);
 
             // Remove mapping
             buttonsForActions.remove(gameAction);
@@ -179,27 +209,24 @@ public abstract class UiScreenBase implements UiScreen {
     }
 
     protected void refreshActionButtons() {
+        refreshActionsInArea(largeActions, largeButtonArea, true);
+        refreshActionsInArea(firstRowActions, firstRowButtonArea, false);
+        refreshActionsInArea(secondRowActions, secondRowButtonArea, false);
+    }
+
+    private void refreshActionsInArea(List<GameAction> actions, final Table buttonArea, boolean large) {
         for (GameAction action : actions) {
             final boolean available = action.isAvailable(world);
 
-            System.out.println("action = " + action.getName());
-            System.out.println("available = " + available);
-
             final TextButton button = buttonsForActions.get(action);
 
-            if (available) buttonArea.add(button);
+            if (available) buttonArea.add(button).left();
             else buttonArea.removeActor(button);
 
             button.setVisible(available);
-            /*
-            if (!available) {
-                button.setColor(0.5f, 0.5f, 0.5f,1);
-            }
-            else {
-                button.setColor(action.getColor());
-            }
-            */
         }
+
+        buttonArea.layout();
     }
 
 

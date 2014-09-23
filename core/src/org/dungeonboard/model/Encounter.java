@@ -30,6 +30,16 @@ public class Encounter  {
     private final List<EncounterListener> listeners = new ArrayList<EncounterListener>();
     private final List<EncounterListener> tempListeners = new ArrayList<EncounterListener>();
 
+    private final CharacterListener characterListener = new CharacterListener() {
+        @Override public void onChanged(GameCharacter character) {
+        }
+
+        @Override public void onInitiativeChanged(GameCharacter character) {
+            sortCharacters();
+            notifyInitiativeChanged();
+        }
+    };
+
     public List<GameCharacter> getCharacters() {
         return characters;
     }
@@ -37,6 +47,7 @@ public class Encounter  {
     public void addCharacter(GameCharacter character) {
         if (!characters.contains(character)) {
             characters.add(character);
+            character.addListener(characterListener);
 
             // TODO: Fix Kludge to avoid concurrent edition.
             tempListeners.clear();
@@ -50,6 +61,7 @@ public class Encounter  {
 
     public void removeCharacter(GameCharacter character) {
         if (characters.contains(character)) {
+            character.removeListener(characterListener);
             characters.remove(character);
 
             if (currentCharacter == character) {
@@ -158,10 +170,14 @@ public class Encounter  {
         setSelectedCharacter(currentCharacter);
 
         // Resort character list
-        Collections.sort(characters, characterListComparator);
+        sortCharacters();
 
         if (roundChanged) notifyRoundChanged();
         notifyTurnChanged();
+    }
+
+    private void sortCharacters() {
+        Collections.sort(characters, characterListComparator);
     }
 
     private GameCharacter getNextCharacterInTurn() {
@@ -224,5 +240,25 @@ public class Encounter  {
             listener.onRoundChanged(this);
         }
     }
+    private void notifyInitiativeChanged() {
+        for (EncounterListener listener : listeners) {
+            listener.onInitiativeChanged(this);
+        }
+    }
 
+    public void reset() {
+        roundNumber = 0;
+        currentCharacter = null;
+        selectedCharacter = null;
+        extraTurnInitiativeDropUsed = false;
+
+        // Reset characters
+        for (GameCharacter character : characters) {
+            character.reset();
+        }
+        sortCharacters();
+
+        notifyTurnChanged();
+        notifyRoundChanged();
+    }
 }
