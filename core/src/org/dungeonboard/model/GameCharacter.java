@@ -1,6 +1,8 @@
 package org.dungeonboard.model;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import org.dungeonboard.StyleSettings;
 
 import java.util.ArrayList;
@@ -18,6 +20,8 @@ public abstract class GameCharacter  {
     private int disabledForRounds = 0;
     private boolean turnUsed;
     private boolean inReadyAction = false;
+
+    private String icon = "merchant_hat";
 
     private List<CharacterListener> listeners = new ArrayList<CharacterListener>();
 
@@ -49,6 +53,15 @@ public abstract class GameCharacter  {
 
     public void setColor(Color color) {
         this.color = color;
+        onChanged();
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
         onChanged();
     }
 

@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -21,6 +22,8 @@ import org.dungeonboard.model.NonPlayerCharacters;
 import org.dungeonboard.model.PlayerCharacter;
 import org.dungeonboard.screens.UiScreen;
 import org.dungeonboard.screens.initiative.InitiativeScreen;
+
+import java.util.ArrayList;
 
 public class Main extends ApplicationAdapter {
 
@@ -61,6 +64,8 @@ public class Main extends ApplicationAdapter {
         // Load textures
         textureAtlas = new TextureAtlas("textures/textures.atlas");
 
+        // Setup list of icons
+        StyleSettings.loadIcons(textureAtlas);
 
         // Stage
         stage = new Stage();

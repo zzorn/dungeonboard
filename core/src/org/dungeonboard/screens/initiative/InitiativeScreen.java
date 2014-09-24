@@ -15,6 +15,7 @@ import org.dungeonboard.actions.EncounterActionBase;
 import org.dungeonboard.actions.GameAction;
 import org.dungeonboard.model.*;
 import org.dungeonboard.screens.UiScreenBase;
+import org.dungeonboard.utils.CharacterButton;
 
 import java.util.HashMap;
 import java.util.List;
@@ -301,10 +302,15 @@ public class InitiativeScreen extends UiScreenBase {
 
         final Table characterRow = new Table(skin);
 
+        // Icon
+        gameCharacter.setIcon(StyleSettings.getRandomIconName());
+        final CharacterButton characterButton = new CharacterButton(skin, gameCharacter, textureAtlas, widthPc * 10);
+        characterRow.add(characterButton).left().padLeft(widthPc * 3);
+
         // Name
         final String name = gameCharacter.getName();
         final Label nameLabel = new Label(name, skin, StyleSettings.SCRIPT_FONT, StyleSettings.DEFAULT_NAME_COLOR);
-        characterRow.add(nameLabel).left().padLeft(widthPc * 3).expandX().fillX();
+        characterRow.add(nameLabel).left().padLeft(widthPc * 1).expandX().fillX();
 
         //slider.addListener(stopTouchDown); // Stops touchDown events from propagating to the FlickScrollPane.
 

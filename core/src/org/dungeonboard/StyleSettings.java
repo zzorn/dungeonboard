@@ -3,6 +3,12 @@ package org.dungeonboard;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  *
@@ -32,7 +38,11 @@ public class StyleSettings {
     public static final Color IN_TURN_NAME_BACKGROUND = new Color(0.9f, 0.8f, 0.4f, 1);
     public static final Color MONSTER_COLOR = new Color(0, 0.8f, 0.2f, 1);
 
+    public static final String ICONS_PATH = "icons/";
+
     private static Sound sound;
+
+    public static final List<TextureAtlas.AtlasRegion> ICONS = new ArrayList<TextureAtlas.AtlasRegion>();
 
     public static void playButtonPressSound() {
         getClickSound().play(0.5f);
@@ -44,5 +54,19 @@ public class StyleSettings {
             sound = Gdx.audio.newSound(Gdx.files.internal("sounds/" + CLICK_SOUND_NAME));
         }
         return sound;
+    }
+
+    protected static void loadIcons(TextureAtlas textureAtlas) {
+        for (TextureAtlas.AtlasRegion region : textureAtlas.getRegions()) {
+            if (region.name.startsWith(ICONS_PATH)) {
+                StyleSettings.ICONS.add(region);
+            }
+        }
+    }
+
+    public static String getRandomIconName() {
+        Random random = new Random();
+
+        return ICONS.get(random.nextInt(ICONS.size())).name.replace(ICONS_PATH, "");
     }
 }
