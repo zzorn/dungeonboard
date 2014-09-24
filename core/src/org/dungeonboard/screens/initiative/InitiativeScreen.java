@@ -3,7 +3,6 @@ package org.dungeonboard.screens.initiative;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
@@ -26,7 +25,7 @@ import java.util.Map;
  */
 public class InitiativeScreen extends UiScreenBase {
 
-    private static final int POINTS_ABOVE_NEXT_TO_GET_FREE_TURN = 10;
+    private static final int POINTS_TO_DROP_FOR_EXTRA_TURN = 10;
     public static final Color BETWEEN_TURNS_COLOR = new Color(0.8f, 0.8f, 0.3f, 1f);
     private final TextureAtlas textureAtlas;
     private Table actorList;
@@ -203,7 +202,6 @@ public class InitiativeScreen extends UiScreenBase {
                     if (selectedCharacter != null) selectedCharacter.addListener(characterListener);
 
                     updateSelectionAreaBar(character, nameEditor, initiativeEditor);
-
                     refreshActionButtons();
                 }
             }
@@ -212,6 +210,8 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void onInitiativeChanged(Encounter encounter) {
                 System.out.println("InitiativeScreen.onInitiativeChanged");
                 resortCharList();
+                updateSelectionAreaBar(encounter.getSelectedCharacter(), nameEditor, initiativeEditor);
+                refreshActionButtons();
             }
         });
 
@@ -270,7 +270,7 @@ public class InitiativeScreen extends UiScreenBase {
     private void updateSelectionAreaBar(GameCharacter character, TextField nameEditor, TextField initiativeEditor) {
         if (updateFromCharChanges) {
             if (character == null) {
-                nameEditor.setText("Between Turns");
+                nameEditor.setText("Between Rounds");
                 nameEditor.setColor(BETWEEN_TURNS_COLOR);
                 initiativeEditor.setText("");
                 nameEditor.setDisabled(true);
@@ -318,6 +318,7 @@ public class InitiativeScreen extends UiScreenBase {
         characterRow.add(readyButton).padLeft(8).padRight(widthPc * 2).right();
         readyButton.addListener(new ClickListener(){
             @Override public void clicked(InputEvent event, float x, float y) {
+                gameCharacter.setTurnUsed(false);
                 getWorld().getCurrentEncounter().setCurrentCharacter(gameCharacter);
                 StyleSettings.playButtonPressSound();
             }
@@ -463,7 +464,7 @@ public class InitiativeScreen extends UiScreenBase {
                                                   boolean hasTurn,
                                                   boolean turnUsed,
                                                   boolean betweenRounds) {
-                return character != null && hasTurn;
+                return character != null && hasTurn && !encounter.severalWithSameInitiativeAndTurnNotDone();
             }
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
@@ -471,6 +472,41 @@ public class InitiativeScreen extends UiScreenBase {
                 encounter.stepToNextTurn();
             }
         }, true, false);
+
+        // Drop initiative and act now
+        addAction(new EncounterActionBase(" Act Now ", Color.GREEN) {
+            @Override public boolean availableFor(GameCharacter character,
+                                                  Encounter encounter,
+                                                  boolean hasTurn,
+                                                  boolean turnUsed,
+                                                  boolean betweenRounds) {
+                return character != null && hasTurn && encounter.severalWithSameInitiativeAndTurnNotDone();
+            }
+
+            @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
+                character.setTurnUsed(true);
+                character.changeInitiative(-1);
+                encounter.stepToNextTurn();
+            }
+        }, false, false);
+
+        addAction(new EncounterActionBase("Act Later", new Color(1f, 1f, 0f, 1f)) {
+            @Override public boolean availableFor(GameCharacter character,
+                                                  Encounter encounter,
+                                                  boolean hasTurn,
+                                                  boolean turnUsed,
+                                                  boolean betweenRounds) {
+                return character != null && hasTurn && encounter.severalWithSameInitiativeAndTurnNotDone();
+            }
+
+            @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
+                character.setTurnUsed(false);
+                final GameCharacter nextCharacter = encounter.getNextCharacter();
+                nextCharacter.changeInitiative(-1);
+                encounter.setSelectedCharacter(nextCharacter);
+                encounter.setCurrentCharacter(nextCharacter);
+            }
+        }, false, true);
 
         // Round done
         addAction(new EncounterActionBase("Next Round", new Color(1f, 1f, 0, 1)) {
@@ -503,7 +539,7 @@ public class InitiativeScreen extends UiScreenBase {
         }, true, false);
 
         // Free turn
-        addAction(new EncounterActionBase("Drop "+POINTS_ABOVE_NEXT_TO_GET_FREE_TURN+" and act again") {
+        addAction(new EncounterActionBase("Drop "+ POINTS_TO_DROP_FOR_EXTRA_TURN +" and act again") {
             @Override public boolean availableFor(GameCharacter character,
                                                   Encounter encounter,
                                                   boolean hasTurn,
@@ -513,12 +549,12 @@ public class InitiativeScreen extends UiScreenBase {
                 return character != null &&
                        hasTurn &&
                        !encounter.isExtraTurnInitiativeDropUsed() &&
-                       encounter.canGetFreeTurn(character, POINTS_ABOVE_NEXT_TO_GET_FREE_TURN);
+                       encounter.canGetFreeTurn(character, POINTS_TO_DROP_FOR_EXTRA_TURN);
 
             }
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
-                character.changeInitiative(-POINTS_ABOVE_NEXT_TO_GET_FREE_TURN);
+                character.changeInitiative(-POINTS_TO_DROP_FOR_EXTRA_TURN);
                 character.setTurnUsed(false);
                 encounter.setExtraTurnInitiativeDropUsed(true);
                 encounter.stepToNextTurn();
@@ -533,11 +569,11 @@ public class InitiativeScreen extends UiScreenBase {
                                                   boolean turnUsed,
                                                   boolean betweenRounds) {
 
-                return hasTurn && !character.isInReadyAction();
+                return hasTurn && !character.isInReadyAction() && !encounter.severalWithSameInitiativeAndTurnNotDone();
             }
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
-                character.setTurnUsed(false);
+                character.setTurnUsed(true);
                 encounter.stepToNextTurn();
                 character.setInReadyAction(true);
             }
@@ -590,6 +626,24 @@ public class InitiativeScreen extends UiScreenBase {
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 character.setEnabled();
+            }
+        }, false, false);
+
+        // Set turn
+        addAction(new EncounterActionBase("Give Turn") {
+            @Override public boolean availableFor(GameCharacter character,
+                                                  Encounter encounter,
+                                                  boolean hasTurn,
+                                                  boolean turnUsed,
+                                                  boolean betweenRounds) {
+
+                return character != null && !hasTurn;
+            }
+
+            @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
+                character.setEnabled();
+                character.setTurnUsed(false);
+                encounter.setCurrentCharacter(character);
             }
         }, false, false);
 

@@ -22,7 +22,12 @@ public class Encounter  {
         @Override public int compare(GameCharacter o1, GameCharacter o2) {
             if (o1.getInitiative() < o2.getInitiative()) return 1;
             else if (o1.getInitiative() > o2.getInitiative()) return -1;
-            else return 0;
+            else {
+                int i = 0;
+                if (o1.isPlayerCharacter()) i--;
+                if (o2.isPlayerCharacter()) i++;
+                return i;
+            }
         }
     };
 
@@ -56,6 +61,9 @@ public class Encounter  {
                 listener.onCharacterAdded(this, character);
             }
             tempListeners.clear();
+
+            sortCharacters();
+            notifyTurnChanged();
         }
     }
 
@@ -154,9 +162,7 @@ public class Encounter  {
         }
 
         // Find next character with highest initiative and unused turn and not disabled, and activate that
-        GameCharacter nextCharacter = getNextCharacterInTurn();
-
-        currentCharacter = nextCharacter;
+        currentCharacter = getNextCharacter();
         if (currentCharacter != null) {
             // Activate char
             currentCharacter.onTurn();
@@ -180,12 +186,16 @@ public class Encounter  {
         Collections.sort(characters, characterListComparator);
     }
 
-    private GameCharacter getNextCharacterInTurn() {
+    /**
+     * @return character whose turn it will be next
+     */
+    public GameCharacter getNextCharacter() {
         int highestInitiative = -9999;
         GameCharacter nextCharacter = null;
         for (GameCharacter character : characters) {
             final int characterInitiative = character.getInitiative();
-            if (!character.isDisabled() &&
+            if (character != currentCharacter &&
+                !character.isDisabled() &&
                 !character.isTurnUsed() &&
                 characterInitiative > highestInitiative) {
                 nextCharacter = character;
@@ -195,11 +205,11 @@ public class Encounter  {
         return nextCharacter;
     }
 
-    public boolean canGetFreeTurn(GameCharacter character, int pointsAboveRequired) {
+    public boolean canGetFreeTurn(GameCharacter character, int pointsToDropForFreeTurn) {
         final GameCharacter highest = findHighestNonDisabledExcept(null);
         final GameCharacter nextHighest = findHighestNonDisabledExcept(highest);
         return highest == character &&
-               (nextHighest == null || character.getInitiative() >= nextHighest.getInitiative() + pointsAboveRequired);
+               (nextHighest == null || character.getInitiative() > nextHighest.getInitiative());
     }
 
     private GameCharacter findHighestNonDisabledExcept(GameCharacter exceptThis) {
@@ -260,5 +270,20 @@ public class Encounter  {
 
         notifyTurnChanged();
         notifyRoundChanged();
+    }
+
+    public boolean severalWithSameInitiativeAndTurnNotDone() {
+        if (currentCharacter == null || currentCharacter.isTurnUsed()) {
+            return false;
+        }
+        else {
+            final GameCharacter nextCharacter = getNextCharacter();
+            if (nextCharacter == null || nextCharacter.isTurnUsed()) {
+                return false;
+            }
+            else {
+                return currentCharacter.getInitiative() == nextCharacter.getInitiative();
+            }
+        }
     }
 }
