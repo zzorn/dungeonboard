@@ -16,6 +16,7 @@ import org.dungeonboard.actions.GameAction;
 import org.dungeonboard.model.*;
 import org.dungeonboard.screens.UiScreenBase;
 import org.dungeonboard.utils.CharacterButton;
+import org.dungeonboard.utils.CharacterEditor;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,13 +28,12 @@ import java.util.Map;
 public class InitiativeScreen extends UiScreenBase {
 
     private static final int POINTS_TO_DROP_FOR_EXTRA_TURN = 10;
-    public static final Color BETWEEN_TURNS_COLOR = new Color(0.8f, 0.8f, 0.3f, 1f);
+    public static final String TITLE = "Dunskulauta";
     private final TextureAtlas textureAtlas;
     private Table actorList;
     private Skin skin;
 
     private GameCharacter selectedCharacter;
-    private boolean updateFromCharChanges = true;
 
     private Map<GameCharacter, Table> characterToRowMapping = new HashMap<GameCharacter, Table>();
     private Drawable glowBackgroundDrawable;
@@ -41,8 +41,10 @@ public class InitiativeScreen extends UiScreenBase {
     private Drawable splatterBackgroundDrawable;
     private Label headerText;
 
+    private CharacterEditor characterEditor;
+
     public InitiativeScreen(World world, TextureAtlas textureAtlas) {
-        super(world, "Dunskulauta");
+        super(world, TITLE);
         this.textureAtlas = textureAtlas;
     }
 
@@ -69,112 +71,17 @@ public class InitiativeScreen extends UiScreenBase {
 
         // List of actors
         actorList = new Table(skin);
-
         final ScrollPane scroll = new ScrollPane(actorList, skin);
-        //scroll.setColor(new Color(0.3f, 0.25f, 0.2f, 1f));
         scroll.setColor(Color.BLACK);
-        /*
-        InputListener stopTouchDown = new InputListener() {
-            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-                event.stop();
-                return false;
-            }
-        };
-        */
-
         frame.add(scroll).expand().fill();
-
         frame.row().padTop(Gdx.graphics.getHeight() * 0.02f);
 
-        // Edit area header bar
-        Table header = new Table(skin);
-        final TextField nameEditor = new TextField("", skin);
-        header.add(nameEditor).expandX().fill();
-        final TextField initiativeEditor = new TextField("", skin);
-        initiativeEditor.setMaxLength(3);
-       // initiativeEditor.setTextFieldFilter(new TextField.TextFieldFilter.DigitsOnlyFilter());
-        header.add(createInitiativeModButton(skin, -10, new Color(0.5f, 0.5f, 1f, 1)));
-        header.add(createInitiativeModButton(skin, -5, new Color(0.6f, 0.6f, 1f, 1)));
-        header.add(createInitiativeModButton(skin, -1, new Color(0.7f, 0.7f, 1f, 1)));
-        header.add(initiativeEditor).width(widthPc * 10).center();
-        header.add(createInitiativeModButton(skin, +1, new Color(1f, 0.7f, 0.7f, 1)));
-        header.add(createInitiativeModButton(skin, +5, new Color(1f, 0.6f, 0.6f, 1)));
-        header.add(createInitiativeModButton(skin, +10, new Color(1f, 0.5f, 0.5f, 1)));
+        // Character editor
+        characterEditor = new CharacterEditor(textureAtlas, skin, Gdx.graphics.getWidth(), true);
+        frame.add(characterEditor.getEditor()).expandX().fillX();
 
-        frame.add(header).expandX().fill();
-
-        final CharacterListener characterListener = new CharacterListener() {
-            @Override public void onChanged(GameCharacter character) {
-                updateSelectionAreaBar(character, nameEditor, initiativeEditor);
-            }
-
-            @Override public void onInitiativeChanged(GameCharacter character) {
-            }
-        };
-
-        // Listen to name field
-        nameEditor.addListener(new InputListener() {
-            @Override public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                nameEditor.selectAll();
-                return true;
-            }
-
-            @Override public boolean keyTyped(InputEvent event, char character) {
-                final GameCharacter selectedCharacter = world.getCurrentEncounter().getSelectedCharacter();
-                if (selectedCharacter != null) {
-                    updateFromCharChanges = false;
-                    selectedCharacter.setName(nameEditor.getText());
-                    updateFromCharChanges = true;
-                }
-
-                // Hide onscreen kb on enter
-                if (event.getKeyCode() == Input.Keys.ENTER) {
-                    final TextField.OnscreenKeyboard onscreenKeyboard = nameEditor.getOnscreenKeyboard();
-                    if (onscreenKeyboard != null) {
-                        onscreenKeyboard.show(false);
-                    }
-                }
-
-                return true;
-            }
-        });
-
-        // Listen to initiative field
-        initiativeEditor.addListener(new InputListener() {
-            @Override public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                initiativeEditor.selectAll();
-                return true;
-            }
-            @Override public boolean keyTyped(InputEvent event, char character) {
-                // Hide onscreen kb on enter
-                if (event.getKeyCode() == Input.Keys.ENTER) {
-                    final TextField.OnscreenKeyboard onscreenKeyboard = nameEditor.getOnscreenKeyboard();
-                    if (onscreenKeyboard != null) {
-                        onscreenKeyboard.show(false);
-                    }
-                }
-
-                final GameCharacter selectedCharacter = world.getCurrentEncounter().getSelectedCharacter();
-                try {
-                    final int initiative = Integer.parseInt(initiativeEditor.getText());
-                    if (selectedCharacter != null) {
-                        updateFromCharChanges = false;
-                        selectedCharacter.setInitiative(initiative);
-                        updateFromCharChanges = true;
-                    }
-                }
-                catch (NumberFormatException e) {
-                    // Don't change initiative
-                }
-                return true;
-            }
-        });
-
-
-
-
+        // Initialize character list
         initCharacterList(world);
-
 
         // Listen to encounter
         world.getCurrentEncounter().addListener(new EncounterListenerAdapter() {
@@ -196,13 +103,9 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void onSelectionChanged(Encounter encounter, GameCharacter character) {
                 if (character != selectedCharacter) {
 
-                    if (selectedCharacter != null) selectedCharacter.removeListener(characterListener);
-
                     selectedCharacter = character;
+                    characterEditor.setCharacter(character);
 
-                    if (selectedCharacter != null) selectedCharacter.addListener(characterListener);
-
-                    updateSelectionAreaBar(character, nameEditor, initiativeEditor);
                     refreshActionButtons();
                 }
             }
@@ -211,12 +114,9 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void onInitiativeChanged(Encounter encounter) {
                 System.out.println("InitiativeScreen.onInitiativeChanged");
                 resortCharList();
-                updateSelectionAreaBar(encounter.getSelectedCharacter(), nameEditor, initiativeEditor);
                 refreshActionButtons();
             }
         });
-
-        // TODO: Listen to changes in a character (name, initiative, etc)
 
 
         setupActions();
@@ -254,38 +154,7 @@ public class InitiativeScreen extends UiScreenBase {
         }
     }
 
-    private TextButton createInitiativeModButton(Skin skin, final int change, Color color) {
-        final TextButton initiativeMod = new TextButton(" " + (change > 0 ? "+" : "") +change + " ", skin);
-        initiativeMod.setColor(color);
-        initiativeMod.addListener(new ClickListener(){
-            @Override public void clicked(InputEvent event, float x, float y) {
-                if (selectedCharacter != null) {
-                    selectedCharacter.changeInitiative(change);
-                    StyleSettings.playButtonPressSound();
-                }
-            }
-        });
-        return initiativeMod;
-    }
 
-    private void updateSelectionAreaBar(GameCharacter character, TextField nameEditor, TextField initiativeEditor) {
-        if (updateFromCharChanges) {
-            if (character == null) {
-                nameEditor.setText("Between Rounds");
-                nameEditor.setColor(BETWEEN_TURNS_COLOR);
-                initiativeEditor.setText("");
-                nameEditor.setDisabled(true);
-                initiativeEditor.setDisabled(true);
-            }
-            else {
-                nameEditor.setText(selectedCharacter.getName());
-                nameEditor.setColor(selectedCharacter.getColor());
-                initiativeEditor.setText("" + selectedCharacter.getInitiative());
-                nameEditor.setDisabled(false);
-                initiativeEditor.setDisabled(false);
-            }
-        }
-    }
 
     private void initCharacterList(World world) {// Add characters in encounter
         actorList.clear();
@@ -452,8 +321,7 @@ public class InitiativeScreen extends UiScreenBase {
     }
 
     @Override protected void onDispose() {
-        // TODO: Implement
-
+        characterEditor.dispose();
     }
 
     @Override public List<GameAction> getAvailableActions() {
