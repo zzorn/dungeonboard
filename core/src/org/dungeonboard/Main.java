@@ -8,27 +8,30 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import org.dungeonboard.model.NonPlayerCharacters;
 import org.dungeonboard.model.PlayerCharacter;
+import org.dungeonboard.model.World;
+import org.dungeonboard.screens.GroupScreen;
+import org.dungeonboard.screens.InitiativeScreen;
 import org.dungeonboard.screens.UiScreen;
-import org.dungeonboard.screens.initiative.InitiativeScreen;
 
 import java.util.ArrayList;
 
-public class Main extends ApplicationAdapter {
+import static org.dungeonboard.StyleSettings.SCRIPT_FONT;
+import static org.dungeonboard.StyleSettings.TITLE_COLOR;
 
+public class Main extends ApplicationAdapter implements Context {
+
+    public static final float TITLE_HEIGHT_PERCENT = 5;
     private Stage stage;
-    private Table rootContainer;
+    private Table screenContainer;
     // For debug drawing
     private ShapeRenderer shapeRenderer;
     private Skin skin;
@@ -36,26 +39,91 @@ public class Main extends ApplicationAdapter {
 
     private TextureAtlas textureAtlas;
 
-
     private UiScreen currentScreen;
 
-    public void setScreen(UiScreen screen) {
+    private final ArrayList<UiScreen> uiScreens = new ArrayList<UiScreen>();
+    private World world;
+    private Label titleLabel;
+    private Table rootContainer;
+
+
+    @Override public void setScreen(UiScreen screen) {
         if (currentScreen != screen) {
             if (currentScreen != null) {
-                rootContainer.removeActor(currentScreen.getActor(skin));
+                screenContainer.removeActor(currentScreen.getActor());
                 currentScreen.setActive(false);
             }
 
             currentScreen = screen;
 
             if (currentScreen != null) {
-                rootContainer.addActor(currentScreen.getActor(skin));
+                screenContainer.addActor(currentScreen.getActor());
                 currentScreen.setActive(true);
+                titleLabel.setText(currentScreen.getTitle());
             }
+            else {
+                titleLabel.setText(StyleSettings.APPLICATION_NAME);
+            }
+
+        }
+    }
+
+    @Override public Skin getSkin() {
+        return skin;
+    }
+
+    @Override public World getWorld() {
+        return world;
+    }
+
+    @Override public TextureAtlas getTextureAtlas() {
+        return textureAtlas;
+    }
+
+    @Override public void switchScreen(boolean toNextOne) {
+        final int currentIndex = uiScreens.indexOf(currentScreen);
+        final int firstIndex = 0;
+        final int lastIndex = uiScreens.size() - 1;
+
+        int index = currentIndex + (toNextOne ? 1 : -1);
+        if (index < firstIndex) {
+            index = lastIndex;
+        }
+        else if (index > lastIndex) {
+            index = firstIndex;
+        }
+
+        if (index >= firstIndex && index <= lastIndex) {
+            setScreen(uiScreens.get(index));
+        }
+        else {
+            setScreen(null);
+        }
+
+    }
+
+    protected void addScreen(UiScreen screen) {
+        uiScreens.add(screen);
+
+        // Select first screen to be added.
+        if (currentScreen == null) {
+            setScreen(screen);
         }
     }
 
     public void create () {
+        // Create model
+        world = createWorld();
+
+        // Build base ui
+        buildUi();
+
+        // Add UI Screens
+        addScreen(new InitiativeScreen(this));
+        addScreen(new GroupScreen(this));
+    }
+
+    private void buildUi() {// Build ui
         final int width = Gdx.graphics.getWidth();
         final int height = Gdx.graphics.getHeight();
         final float heightPc = height * 0.01f;
@@ -87,101 +155,53 @@ public class Main extends ApplicationAdapter {
         shapeRenderer = new ShapeRenderer();
 
         // Root container
-        rootContainer = new Table();
+        rootContainer = new Table(skin);
         rootContainer.setFillParent(true);
         stage.addActor(rootContainer);
 
-        // List of actors
-        Table actorList = new Table();
-        actorList.pad(10).defaults().expandX().space(4);
+        // Title
+        Table titleRow = createTitlebar(heightPc);
+        rootContainer.add(titleRow).top().expandX().fillX().pad(0, 2*widthPc, 0, 2*widthPc);
+        rootContainer.row();
 
-        final ScrollPane scroll = new ScrollPane(actorList, skin);
-        InputListener stopTouchDown = new InputListener() {
-            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-                event.stop();
-                return false;
-            }
-        };
+        // Container for the current screen
+        screenContainer = new Table(skin);
+        rootContainer.add(screenContainer).expand().fill();
+    }
 
-        // Debug content
-        for (int i = 0; i < 100; i++) {
-            actorList.row();
-            actorList.add(new Label(i + " Jörgen", skin, StyleSettings.SCRIPT_FONT, new Color(0.9f, 0.8f, 0.7f, 1f))).expandX().fillX();
-            final String buttonText = i + "dos";
-            TextButton button = new TextButton(buttonText, skin);
 
-            actorList.add(button);
-            button.addListener(new ClickListener() {
-                public void clicked (InputEvent event, float x, float y) {
-                    System.out.println(buttonText + " click " + x + ", " + y);
-                }
-            });
-            Slider slider = new Slider(0, 100, 1, false, skin);
-            slider.addListener(stopTouchDown); // Stops touchDown events from propagating to the FlickScrollPane.
-            actorList.add(slider);
-            actorList.add(new Label(i + "tres long0 long1 long2 long3 long4 long5 long6 long7 long8 long9 long10 long11 long12", skin));
-        }
+    private Table createTitlebar(float heightPc) {
+        Table titleRow = new Table(skin);
+        titleRow.setHeight(heightPc* TITLE_HEIGHT_PERCENT);
 
-        final TextButton flickButton = new TextButton("Flick Scroll", skin.get("toggle", TextButton.TextButtonStyle.class));
-        flickButton.setChecked(true);
-        flickButton.addListener(new ChangeListener() {
-            public void changed (ChangeEvent event, Actor actor) {
-                scroll.setFlickScroll(flickButton.isChecked());
+        titleRow.add(createSwitchButton("Prev", false)).left();
+
+        titleLabel = new Label(StyleSettings.APPLICATION_NAME, skin, SCRIPT_FONT, TITLE_COLOR);
+        titleLabel.setColor(Color.WHITE);
+        titleRow.add(titleLabel).center().expandX();
+
+        titleRow.add(createSwitchButton("Next", true)).right();
+
+        return titleRow;
+    }
+
+    private Actor createSwitchButton(final String text, final boolean toNextOne) {
+        final TextButton switchButton = new TextButton(text, skin);
+        switchButton.addListener(new ClickListener() {
+            @Override public void clicked(InputEvent event, float x, float y) {
+                switchScreen(toNextOne);
             }
         });
-        final TextButton fadeButton = new TextButton("Fade Scrollbars", skin.get("toggle", TextButton.TextButtonStyle.class));
-        fadeButton.setChecked(true);
-        fadeButton.addListener(new ChangeListener() {
-            public void changed (ChangeEvent event, Actor actor) {
-                scroll.setFadeScrollBars(fadeButton.isChecked());
-            }
-        });
-        final TextButton smoothButton = new TextButton("Smooth Scrolling", skin.get("toggle", TextButton.TextButtonStyle.class));
-        smoothButton.setChecked(true);
-        smoothButton.addListener(new ChangeListener() {
-            public void changed (ChangeEvent event, Actor actor) {
-                scroll.setSmoothScrolling(smoothButton.isChecked());
-            }
-        });
-        final TextButton onTopButton = new TextButton("Scrollbars On Top", skin.get("toggle", TextButton.TextButtonStyle.class));
-        onTopButton.addListener(new ChangeListener() {
-            public void changed(ChangeEvent event, Actor actor) {
-                scroll.setScrollbarsOnTop(onTopButton.isChecked());
-            }
-        });
-        //rootContainer.add(scroll).expand().fill();
+        return switchButton;
+    }
 
-
-        Table mainButtonBar = new Table();
-        mainButtonBar.row().space(2*heightPc).padBottom(3 * heightPc);
-        mainButtonBar.pad(10).defaults().expandX().space(4);
-        mainButtonBar.add(flickButton).right().expandX();
-        mainButtonBar.add(onTopButton);
-        mainButtonBar.add(smoothButton);
-        mainButtonBar.add(fadeButton).left().expandX();
-        ScrollPane mainButtonScroll = new ScrollPane(mainButtonBar, skin);
-        mainButtonScroll.setScrollingDisabled(false, true);
-        mainButtonScroll.setFlickScroll(true);
-        mainButtonScroll.setColor(Color.BLACK);
-
-        //rootContainer.row().height(heightPc * 10);
-        //rootContainer.add(mainButtonScroll).expandX().fill();
-
-
+    private World createWorld() {
         World world = new World();
         world.getCurrentEncounter().addCharacter(new PlayerCharacter("Adventurer1"));
         world.getCurrentEncounter().addCharacter(new PlayerCharacter("Adventurer2"));
         world.getCurrentEncounter().addCharacter(new PlayerCharacter("Adventurer3"));
         world.getCurrentEncounter().addCharacter(new NonPlayerCharacters("Others"));
-        /*
-        world.getCurrentEncounter().addCharacter(new PlayerCharacter("Igor", Color.PINK));
-        world.getCurrentEncounter().addCharacter(new PlayerCharacter("Jurgen"));
-        world.getCurrentEncounter().addCharacter(new PlayerCharacter("Oscaaar", Color.CYAN));
-        world.getCurrentEncounter().addCharacter(new PlayerCharacter("Cthulhu", Color.GREEN));
-        */
-        InitiativeScreen initiativeScreen = new InitiativeScreen(world, textureAtlas);
-        setScreen(initiativeScreen);
-
+        return world;
     }
 
     public void resize (int width, int height) {

@@ -1,12 +1,14 @@
 package org.dungeonboard.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import org.dungeonboard.Context;
 import org.dungeonboard.StyleSettings;
-import org.dungeonboard.World;
+import org.dungeonboard.model.World;
 import org.dungeonboard.actions.GameAction;
 import org.dungeonboard.utils.ActionButton;
 
@@ -25,10 +27,8 @@ public abstract class UiScreenBase implements UiScreen {
 
 
     private static final int NUMBER_OF_BUTTONS_PER_ROW = 4;
-    private final World world;
     private String title;
     private boolean active;
-    private Skin skin;
     private Actor actor;
     private Table largeButtonArea;
     private Table firstRowButtonArea;
@@ -38,10 +38,12 @@ public abstract class UiScreenBase implements UiScreen {
     private List<GameAction> firstRowActions = new ArrayList<GameAction>();
     private List<GameAction> secondRowActions = new ArrayList<GameAction>();
 
+    private final Context context;
+
     private final Map<GameAction, TextButton> buttonsForActions = new HashMap<GameAction, TextButton>();
 
-    protected UiScreenBase(World world, String title) {
-        this.world = world;
+    protected UiScreenBase(Context context, String title) {
+        this.context = context;
         this.title = title;
     }
 
@@ -49,9 +51,9 @@ public abstract class UiScreenBase implements UiScreen {
         return title;
     }
 
-    @Override public Actor getActor(Skin skin) {
+    @Override public Actor getActor() {
         if (actor == null) {
-            actor = create(skin);
+            actor = create();
         }
 
         return actor;
@@ -67,6 +69,8 @@ public abstract class UiScreenBase implements UiScreen {
 
             if (this.active) onActivated();
             else onDeactivated();
+
+            //actor.setVisible(active);
         }
     }
 
@@ -74,9 +78,8 @@ public abstract class UiScreenBase implements UiScreen {
         return active;
     }
 
-    @Override public final Actor create(Skin skin) {
-        this.skin = skin;
-
+    private Actor create() {
+        final Skin skin = context.getSkin();
         final int width = Gdx.graphics.getWidth();
         final int height = Gdx.graphics.getHeight();
         final float heightPc = height * 0.01f;
@@ -86,17 +89,6 @@ public abstract class UiScreenBase implements UiScreen {
         Table rootTable = new Table(skin);
         rootTable.setFillParent(true);
 
-        Table titleRow = new Table(skin);
-        titleRow.setHeight(heightPc*5);
-
-        // Add titlebar
-        titleRow.add(new Label(getTitle(), skin, SCRIPT_FONT, TITLE_COLOR)).center();
-        rootTable.add(titleRow).expandX().fill();
-
-        // Add screen change buttons
-        // TODO
-
-        rootTable.row();
 
         // Buttons
         Table buttonArea = new Table(skin);
@@ -113,7 +105,7 @@ public abstract class UiScreenBase implements UiScreen {
 
 
         // Create content
-        final Actor content = createContent(this.skin, world);
+        final Actor content = createContent(getWorld(), getSkin(), getTextureAtlas());
         rootTable.add(content).expand().fill();
 
         // Add action buttons below content
@@ -138,18 +130,30 @@ public abstract class UiScreenBase implements UiScreen {
 
     @Override public final void update(float deltaTimeSeconds) {
         refreshActionButtons();
-        onUpdate(deltaTimeSeconds, world);
+        onUpdate(deltaTimeSeconds, getWorld());
     }
 
     @Override public final void dispose() {
         onDispose();
     }
 
-    protected World getWorld() {
-        return world;
+    protected final World getWorld() {
+        return context.getWorld();
     }
 
-    protected void addAction(final GameAction gameAction, boolean large, boolean rowTwo) {
+    protected final Skin getSkin() {
+        return context.getSkin();
+    }
+
+    protected final TextureAtlas getTextureAtlas() {
+        return context.getTextureAtlas();
+    }
+
+    protected final Context getContext() {
+        return context;
+    }
+
+    protected final void addAction(final GameAction gameAction, boolean large, boolean rowTwo) {
         final int height = Gdx.graphics.getHeight();
         final float heightPc = height * 0.01f;
 
@@ -162,12 +166,12 @@ public abstract class UiScreenBase implements UiScreen {
         // Add
         if (!actions.contains(gameAction)) {
             actions.add(gameAction);
-            final TextButton button = new ActionButton("   " + gameAction.getName() + "   ", skin, large);
+            final TextButton button = new ActionButton("   " + gameAction.getName() + "   ", getSkin(), large);
             button.setColor(gameAction.getColor());
             button.addListener(new ClickListener() {
                 @Override public void clicked(InputEvent event, float x, float y) {
-                    if (gameAction.isAvailable(world)) {
-                        gameAction.doAction(world);
+                    if (gameAction.isAvailable(getWorld())) {
+                        gameAction.doAction(getWorld());
                         StyleSettings.playButtonPressSound();
                     }
                 }
@@ -216,7 +220,7 @@ public abstract class UiScreenBase implements UiScreen {
 
     private void refreshActionsInArea(List<GameAction> actions, final Table buttonArea, boolean large) {
         for (GameAction action : actions) {
-            final boolean available = action.isAvailable(world);
+            final boolean available = action.isAvailable(getWorld());
 
             final TextButton button = buttonsForActions.get(action);
 
@@ -230,7 +234,7 @@ public abstract class UiScreenBase implements UiScreen {
     }
 
 
-    protected abstract Actor createContent(Skin skin, World world);
+    protected abstract Actor createContent(World world, Skin skin, TextureAtlas textureAtlas);
     protected abstract void onUpdate(float deltaTimeSeconds, World world);
     protected abstract void onDispose();
 

@@ -3,23 +3,24 @@ package org.dungeonboard.utils;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import org.dungeonboard.Context;
 import org.dungeonboard.StyleSettings;
 import org.dungeonboard.model.CharacterListener;
 import org.dungeonboard.model.GameCharacter;
+import org.dungeonboard.uis.UiBase;
 
 /**
  * Editor for a character.
  */
-public class CharacterEditor {
+public class CharacterEditor extends UiBase {
 
     private GameCharacter character;
     private Table editor;
-    private final TextureAtlas textureAtlas;
-    private final Skin skin;
     private final boolean includeInitiativeEditor;
     private final float maxWidth;
     private boolean updateUiOnCharacterChanges = true;
@@ -41,9 +42,8 @@ public class CharacterEditor {
     private Table table;
     private Table initiativeEditorTable;
 
-    public CharacterEditor(TextureAtlas textureAtlas, Skin skin, float maxWidth, boolean includeInitiativeEditor) {
-        this.textureAtlas = textureAtlas;
-        this.skin = skin;
+    public CharacterEditor(Context context, float maxWidth, boolean includeInitiativeEditor) {
+        super(context);
         this.maxWidth = maxWidth;
         this.includeInitiativeEditor = includeInitiativeEditor;
     }
@@ -68,19 +68,11 @@ public class CharacterEditor {
         }
     }
 
-    public Table getEditor() {
-        if (editor == null) {
-            editor = createEditor();
-        }
-
-        return editor;
-    }
-
     public void dispose() {
         setCharacter(null);
     }
 
-    private Table createEditor() {
+    @Override protected Actor createUi(Skin skin, TextureAtlas textureAtlas) {
         table = new Table(skin);
 
         // Icon editor
@@ -90,11 +82,11 @@ public class CharacterEditor {
         // TODO
 
         // Name editor
-        table.add(createNameEditor()).expandX().fillX();
+        table.add(createNameEditor(skin)).expandX().fillX();
 
         // Initiative editor
         if (includeInitiativeEditor) {
-            table.add(createInitiativeEditor());
+            table.add(createInitiativeEditor(skin));
         }
 
         // Initialize UI
@@ -103,7 +95,7 @@ public class CharacterEditor {
         return table;
     }
 
-    private TextField createNameEditor() {
+    private TextField createNameEditor(Skin skin) {
         // Name field
         nameEditor = new TextField("", skin);
 
@@ -133,7 +125,7 @@ public class CharacterEditor {
         return nameEditor;
     }
 
-    private Table createInitiativeEditor() {
+    private Table createInitiativeEditor(Skin skin) {
         initiativeEditorTable = new Table(skin);
 
         // Initiative field
@@ -143,11 +135,13 @@ public class CharacterEditor {
         initiativeEditor.setRightAligned(true);
         // initiativeEditor.setTextFieldFilter(new TextField.TextFieldFilter.DigitsOnlyFilter());
 
+        final float maxInitiativeWidth = initiativeEditor.getStyle().font.getBounds("999").width + initiativeEditor.getStyle().background.getMinWidth();
+
         // Initiative quick adjustment buttons
         //initiativeEditorTable.add(createInitiativeModButton(skin, -10, new Color(0.5f, 0.5f, 1f, 1)));
         initiativeEditorTable.add(createInitiativeModButton(skin, -5, new Color(0.6f, 0.6f, 1f, 1)));
         initiativeEditorTable.add(createInitiativeModButton(skin, -1, new Color(0.7f, 0.7f, 1f, 1)));
-        initiativeEditorTable.add(initiativeEditor).width(maxWidth * 0.1f).center();
+        initiativeEditorTable.add(initiativeEditor).width(maxInitiativeWidth).center();
         initiativeEditorTable.add(createInitiativeModButton(skin, +1, new Color(1f, 0.7f, 0.7f, 1)));
         initiativeEditorTable.add(createInitiativeModButton(skin, +5, new Color(1f, 0.6f, 0.6f, 1)));
         //initiativeEditorTable.add(createInitiativeModButton(skin, +10, new Color(1f, 0.5f, 0.5f, 1)));

@@ -15,6 +15,8 @@ import java.util.Random;
  */
 public class StyleSettings {
 
+    public static final String APPLICATION_NAME = "Dungeon Board";
+
     public static final Color TITLE_COLOR = new Color(0.9f, 0.8f, 0.7f, 1f);
 
     public static final Color DEFAULT_NAME_COLOR = new Color(1f, 0.9f, 0.8f, 1f);

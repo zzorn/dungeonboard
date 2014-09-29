@@ -1,4 +1,4 @@
-package org.dungeonboard;
+package org.dungeonboard.model;
 
 import org.dungeonboard.actions.ActionRegistry;
 import org.dungeonboard.model.Encounter;
@@ -14,7 +14,11 @@ import java.util.List;
 public class World {
 
     private final Party party = new Party();
-    private Encounter encounter = new Encounter();
+    private Encounter encounter;
+
+    public World() {
+        startEncounter();
+    }
 
     public Encounter getCurrentEncounter() {
         return encounter;
@@ -28,10 +32,11 @@ public class World {
         if (encounter != null) throw new IllegalStateException("Encounter already ongoing");
 
         encounter = new Encounter();
-        encounter.addParty(party);
+        encounter.setParty(party);
     }
 
     public void endEncounter() {
+        encounter.dispose();
         encounter = null;
     }
 

@@ -1,20 +1,18 @@
-package org.dungeonboard.screens.initiative;
+package org.dungeonboard.screens;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.*;
+import org.dungeonboard.Context;
 import org.dungeonboard.StyleSettings;
-import org.dungeonboard.World;
+import org.dungeonboard.model.World;
 import org.dungeonboard.actions.EncounterActionBase;
 import org.dungeonboard.actions.GameAction;
 import org.dungeonboard.model.*;
-import org.dungeonboard.screens.UiScreenBase;
 import org.dungeonboard.utils.CharacterButton;
 import org.dungeonboard.utils.CharacterEditor;
 
@@ -28,10 +26,8 @@ import java.util.Map;
 public class InitiativeScreen extends UiScreenBase {
 
     private static final int POINTS_TO_DROP_FOR_EXTRA_TURN = 10;
-    public static final String TITLE = "Dunskulauta";
-    private final TextureAtlas textureAtlas;
+    public static final String TITLE = "Initiatives";
     private Table actorList;
-    private Skin skin;
 
     private GameCharacter selectedCharacter;
 
@@ -43,13 +39,12 @@ public class InitiativeScreen extends UiScreenBase {
 
     private CharacterEditor characterEditor;
 
-    public InitiativeScreen(World world, TextureAtlas textureAtlas) {
-        super(world, TITLE);
-        this.textureAtlas = textureAtlas;
+
+    public InitiativeScreen(Context context) {
+        super(context, TITLE);
     }
 
-    @Override protected Actor createContent(Skin skin, final World world) {
-        this.skin = skin;
+    @Override protected Actor createContent(final World world, Skin skin, TextureAtlas textureAtlas) {
 
         glowBackgroundDrawable = new TextureRegionDrawable(textureAtlas.findRegion("selection_glow"));
         boxBackgroundDrawable = new NinePatchDrawable(textureAtlas.createPatch("selection_outline"));
@@ -77,8 +72,8 @@ public class InitiativeScreen extends UiScreenBase {
         frame.row().padTop(Gdx.graphics.getHeight() * 0.02f);
 
         // Character editor
-        characterEditor = new CharacterEditor(textureAtlas, skin, Gdx.graphics.getWidth(), true);
-        frame.add(characterEditor.getEditor()).expandX().fillX();
+        characterEditor = new CharacterEditor(getContext(), Gdx.graphics.getWidth(), true);
+        frame.add(characterEditor.getUi()).expandX().fillX();
 
         // Initialize character list
         initCharacterList(world);
@@ -109,7 +104,6 @@ public class InitiativeScreen extends UiScreenBase {
                     refreshActionButtons();
                 }
             }
-
 
             @Override public void onInitiativeChanged(Encounter encounter) {
                 System.out.println("InitiativeScreen.onInitiativeChanged");
@@ -167,13 +161,15 @@ public class InitiativeScreen extends UiScreenBase {
 
     private void addCharacter(final GameCharacter gameCharacter) {
 
+        final Skin skin = getSkin();
+
         final float widthPc = Gdx.graphics.getWidth() * 0.01f;
 
         final Table characterRow = new Table(skin);
 
         // Icon
         gameCharacter.setIcon(StyleSettings.getRandomIconName());
-        final CharacterButton characterButton = new CharacterButton(skin, gameCharacter, textureAtlas, widthPc * 10);
+        final CharacterButton characterButton = new CharacterButton(skin, gameCharacter, getTextureAtlas(), widthPc * 10);
         characterRow.add(characterButton).left().padLeft(widthPc * 3);
 
         // Name
@@ -343,7 +339,7 @@ public class InitiativeScreen extends UiScreenBase {
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 character.setTurnUsed(true);
-                encounter.stepToNextTurn();
+                encounter.stepToNextTurn(false);
             }
         }, true, false);
 
@@ -360,7 +356,7 @@ public class InitiativeScreen extends UiScreenBase {
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 character.setTurnUsed(true);
                 character.changeInitiative(-1);
-                encounter.stepToNextTurn();
+                encounter.stepToNextTurn(false);
             }
         }, false, false);
 
@@ -375,7 +371,7 @@ public class InitiativeScreen extends UiScreenBase {
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 character.setTurnUsed(false);
-                final GameCharacter nextCharacter = encounter.getNextCharacter();
+                final GameCharacter nextCharacter = encounter.getNextCharacter(false);
                 nextCharacter.changeInitiative(-1);
                 encounter.setSelectedCharacter(nextCharacter);
                 encounter.setCurrentCharacter(nextCharacter);
@@ -393,7 +389,7 @@ public class InitiativeScreen extends UiScreenBase {
             }
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
-                encounter.stepToNextTurn();
+                encounter.stepToNextTurn(false);
             }
         }, true, false);
 
@@ -413,7 +409,7 @@ public class InitiativeScreen extends UiScreenBase {
         }, true, false);
 
         // Free turn
-        addAction(new EncounterActionBase("Drop "+ POINTS_TO_DROP_FOR_EXTRA_TURN +" and act again") {
+        addAction(new EncounterActionBase("Drop "+ POINTS_TO_DROP_FOR_EXTRA_TURN +" and act again", new Color(0.2f, 0.8f, 0.2f, 1f)) {
             @Override public boolean availableFor(GameCharacter character,
                                                   Encounter encounter,
                                                   boolean hasTurn,
@@ -431,7 +427,7 @@ public class InitiativeScreen extends UiScreenBase {
                 character.changeInitiative(-POINTS_TO_DROP_FOR_EXTRA_TURN);
                 character.setTurnUsed(false);
                 encounter.setExtraTurnInitiativeDropUsed(true);
-                encounter.stepToNextTurn();
+                encounter.stepToNextTurn(true);
             }
         }, false, false);
 
@@ -448,7 +444,7 @@ public class InitiativeScreen extends UiScreenBase {
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 character.setTurnUsed(true);
-                encounter.stepToNextTurn();
+                encounter.stepToNextTurn(false);
                 character.setInReadyAction(true);
             }
         }, false, false);
@@ -532,7 +528,7 @@ public class InitiativeScreen extends UiScreenBase {
             }
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
-                encounter.addCharacter(new PlayerCharacter("Adventurer"));
+                encounter.getParty().addMember(new PlayerCharacter("Adventurer"));
             }
         }, false, true);
 
@@ -579,7 +575,12 @@ public class InitiativeScreen extends UiScreenBase {
             }
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
-                encounter.removeCharacter(character);
+                if (character instanceof PlayerCharacter) {
+                    encounter.getParty().removeMember((PlayerCharacter) character);
+                }
+                else {
+                    encounter.removeCharacter(character);
+                }
             }
         }, false, true);
 

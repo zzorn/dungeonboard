@@ -13,9 +13,7 @@ public interface UiScreen {
 
     String getTitle();
 
-    Actor getActor(Skin skin);
-
-    Actor create(Skin skin);
+    Actor getActor();
 
     void update(float deltaTimeSeconds);
 

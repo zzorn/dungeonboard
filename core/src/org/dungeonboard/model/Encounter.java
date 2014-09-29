@@ -12,11 +12,22 @@ import java.util.List;
 public class Encounter  {
 
     private List<GameCharacter> characters = new ArrayList<GameCharacter>();
-
     private int roundNumber = 0;
+
     private boolean extraTurnInitiativeDropUsed = false;
     private GameCharacter currentCharacter = null;
     private GameCharacter selectedCharacter = null;
+    private Party party;
+
+    private final PartyListener partyListener = new PartyListener() {
+        @Override public void onMemberAdded(PlayerCharacter character) {
+            addCharacter(character);
+        }
+
+        @Override public void onMemberRemoved(PlayerCharacter character) {
+            removeCharacter(character);
+        }
+    };
 
     private final Comparator<GameCharacter> characterListComparator = new Comparator<GameCharacter>() {
         @Override public int compare(GameCharacter o1, GameCharacter o2) {
@@ -77,7 +88,7 @@ public class Encounter  {
             }
 
             if (currentCharacter == character) {
-                stepToNextTurn();
+                stepToNextTurn(false);
             }
 
             // TODO: Fix Kludge to avoid concurrent edition.
@@ -88,6 +99,10 @@ public class Encounter  {
             }
             tempListeners.clear();
         }
+    }
+
+    public Party getParty() {
+        return party;
     }
 
     public boolean isExtraTurnInitiativeDropUsed() {
@@ -116,12 +131,27 @@ public class Encounter  {
     }
 
     /**
-     * Add all player characters from the party to the encounter.
+     * Set the party participating in this encounter.  All characters from it are added.
      */
-    public void addParty(Party party) {
-        for (PlayerCharacter playerCharacter : party.getPlayerCharacters()) {
-            addCharacter(playerCharacter);
+    public void setParty(Party party) {
+        if (this.party != null) {
+            this.party.removeListener(partyListener);
+
+            for (PlayerCharacter playerCharacter : this.party.getPlayerCharacters()) {
+                removeCharacter(playerCharacter);
+            }
         }
+
+        this.party = party;
+
+        if (this.party != null) {
+            for (PlayerCharacter playerCharacter : this.party.getPlayerCharacters()) {
+                addCharacter(playerCharacter);
+            }
+
+            this.party.addListener(partyListener);
+        }
+
     }
 
     public GameCharacter getCurrentCharacter() {
@@ -144,7 +174,7 @@ public class Encounter  {
     }
 
 
-    public void stepToNextTurn() {
+    public void stepToNextTurn(boolean allowSameCharacter) {
         boolean roundChanged = false;
         if (currentCharacter == null) {
             // We were at between turns
@@ -162,7 +192,7 @@ public class Encounter  {
         }
 
         // Find next character with highest initiative and unused turn and not disabled, and activate that
-        currentCharacter = getNextCharacter();
+        currentCharacter = getNextCharacter(allowSameCharacter);
         if (currentCharacter != null) {
             // Activate char
             currentCharacter.onTurn();
@@ -187,14 +217,15 @@ public class Encounter  {
     }
 
     /**
+     * @param allowSameCharacter true if the same character can get the turn again if he has an unused turn and highest initiative
      * @return character whose turn it will be next
      */
-    public GameCharacter getNextCharacter() {
+    public GameCharacter getNextCharacter(boolean allowSameCharacter) {
         int highestInitiative = -9999;
         GameCharacter nextCharacter = null;
         for (GameCharacter character : characters) {
             final int characterInitiative = character.getInitiative();
-            if (character != currentCharacter &&
+            if ((character != currentCharacter || allowSameCharacter) &&
                 !character.isDisabled() &&
                 !character.isTurnUsed() &&
                 characterInitiative > highestInitiative) {
@@ -277,7 +308,7 @@ public class Encounter  {
             return false;
         }
         else {
-            final GameCharacter nextCharacter = getNextCharacter();
+            final GameCharacter nextCharacter = getNextCharacter(false);
             if (nextCharacter == null || nextCharacter.isTurnUsed()) {
                 return false;
             }
@@ -285,5 +316,9 @@ public class Encounter  {
                 return currentCharacter.getInitiative() == nextCharacter.getInitiative();
             }
         }
+    }
+
+    public void dispose() {
+        setParty(null);
     }
 }

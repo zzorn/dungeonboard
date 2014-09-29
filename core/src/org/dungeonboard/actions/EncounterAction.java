@@ -1,7 +1,6 @@
 package org.dungeonboard.actions;
 
-import com.badlogic.gdx.graphics.Color;
-import org.dungeonboard.World;
+import org.dungeonboard.model.World;
 import org.dungeonboard.model.Encounter;
 import org.dungeonboard.model.GameCharacter;
 
