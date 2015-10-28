@@ -11,11 +11,13 @@ public class NonPlayerCharacters extends GameCharacter {
     }
 
     public NonPlayerCharacters(String name) {
-        super(name, new Color(0.2f, 0.9f, 0.2f, 1f));
+        this(name, new Color(0.2f, 0.9f, 0.2f, 1f));
     }
 
     public NonPlayerCharacters(String name, Color color) {
         super(name, color);
+
+        setIcon("skull");
     }
 
     @Override public boolean isPlayerCharacter() {

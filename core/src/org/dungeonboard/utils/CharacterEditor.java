@@ -84,6 +84,9 @@ public class CharacterEditor extends UiBase {
         // Name editor
         table.add(createNameEditor(skin)).expandX().fillX();
 
+        // Item selector
+        // TODO: Allow toggling predefined items on or off for this character
+
         // Initiative editor
         if (includeInitiativeEditor) {
             table.add(createInitiativeEditor(skin));

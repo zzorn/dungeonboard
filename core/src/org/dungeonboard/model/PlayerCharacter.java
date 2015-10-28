@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.Color;
 public class PlayerCharacter extends GameCharacter {
 
     public PlayerCharacter() {
+        this("Adventurer");
     }
 
     public PlayerCharacter(String name) {

@@ -18,6 +18,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import org.dungeonboard.model.NonPlayerCharacters;
 import org.dungeonboard.model.PlayerCharacter;
 import org.dungeonboard.model.World;
+import org.dungeonboard.screens.CharacterEditorScreen;
 import org.dungeonboard.screens.GroupScreen;
 import org.dungeonboard.screens.InitiativeScreen;
 import org.dungeonboard.screens.UiScreen;
@@ -121,6 +122,7 @@ public class Main extends ApplicationAdapter implements Context {
         // Add UI Screens
         addScreen(new InitiativeScreen(this));
         addScreen(new GroupScreen(this));
+        addScreen(new CharacterEditorScreen(this));
     }
 
     private void buildUi() {// Build ui

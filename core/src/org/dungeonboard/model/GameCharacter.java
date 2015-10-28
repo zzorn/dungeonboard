@@ -1,8 +1,6 @@
 package org.dungeonboard.model;
 
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
 import org.dungeonboard.StyleSettings;
 
 import java.util.ArrayList;
@@ -22,6 +20,8 @@ public abstract class GameCharacter  {
     private boolean inReadyAction = false;
 
     private String icon = "merchant_hat";
+
+    private List<Item> items = new ArrayList<Item>();
 
     private List<CharacterListener> listeners = new ArrayList<CharacterListener>();
 
@@ -123,6 +123,35 @@ public abstract class GameCharacter  {
     public void setInReadyAction(boolean inReadyAction) {
         this.inReadyAction = inReadyAction;
         onChanged();
+    }
+
+    /**
+     * @return the items carried / managed by this character.
+     */
+    public List<Item> getItems() {
+        return items;
+    }
+
+    /**
+     * @param item Item to add.
+     */
+    public final void addItem(Item item) {
+        //Check.notNull(item, "item");
+        //Check.notContained(item, items, "items");
+
+        items.add(item);
+        onChanged();
+    }
+
+
+    /**
+     * @param item Item to remove.
+     */
+    public final void removeItem(Item item) {
+        if (items != null) {
+            items.remove(item);
+            onChanged();
+        }
     }
 
     public void onNewRound() {

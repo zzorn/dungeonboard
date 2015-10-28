@@ -168,7 +168,7 @@ public class InitiativeScreen extends UiScreenBase {
         final Table characterRow = new Table(skin);
 
         // Icon
-        gameCharacter.setIcon(StyleSettings.getRandomIconName());
+        //gameCharacter.setIcon(StyleSettings.getRandomIconName());
         final CharacterButton characterButton = new CharacterButton(skin, gameCharacter, getTextureAtlas(), widthPc * 10);
         characterRow.add(characterButton).left().padLeft(widthPc * 3);
 
