@@ -38,6 +38,7 @@ public class InitiativeScreen extends UiScreenBase {
     private Label headerText;
 
     private CharacterEditor characterEditor;
+    private ScrollPane actorScrollPane;
 
 
     public InitiativeScreen(Context context) {
@@ -66,9 +67,9 @@ public class InitiativeScreen extends UiScreenBase {
 
         // List of actors
         actorList = new Table(skin);
-        final ScrollPane scroll = new ScrollPane(actorList, skin);
-        scroll.setColor(Color.BLACK);
-        frame.add(scroll).expand().fill();
+        actorScrollPane = new ScrollPane(actorList, skin);
+        actorScrollPane.setColor(Color.BLACK);
+        frame.add(actorScrollPane).expand().fill();
         frame.row().padTop(Gdx.graphics.getHeight() * 0.02f);
 
         // Character editor
@@ -93,6 +94,9 @@ public class InitiativeScreen extends UiScreenBase {
                 refreshActionButtons();
                 resortCharList();
                 updateHeaderText(encounter);
+
+                // Focus the current character
+                focusCurrentCharacter(encounter);
             }
 
             @Override public void onSelectionChanged(Encounter encounter, GameCharacter character) {
@@ -187,7 +191,7 @@ public class InitiativeScreen extends UiScreenBase {
         // Ready action button
         final TextButton readyButton = new TextButton("Ready", skin);
         characterRow.add(readyButton).padLeft(8).padRight(widthPc * 2).right();
-        readyButton.addListener(new ClickListener(){
+        readyButton.addListener(new ClickListener() {
             @Override public void clicked(InputEvent event, float x, float y) {
                 gameCharacter.setTurnUsed(false);
                 getWorld().getCurrentEncounter().setCurrentCharacter(gameCharacter);
@@ -236,6 +240,22 @@ public class InitiativeScreen extends UiScreenBase {
         characterToRowMapping.put(gameCharacter, characterRow);
 
         addCharacterRow(characterRow);
+    }
+
+    private void focusCurrentCharacter(Encounter encounter) {
+        if (encounter.getCurrentCharacter() != null) {
+            focusCharacter(encounter.getCurrentCharacter());
+        }
+    }
+
+    private void focusCharacter(GameCharacter currentCharacter) {
+        if (actorScrollPane != null) {
+            final Table characterRow = characterToRowMapping.get(currentCharacter);
+            actorScrollPane.scrollTo(characterRow.getX(),
+                                     characterRow.getY(),
+                                     characterRow.getWidth(),
+                                     characterRow.getHeight());
+        }
     }
 
     private void addCharacterRow(Table characterRow) {

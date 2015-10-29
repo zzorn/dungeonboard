@@ -8,6 +8,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
  */
 public class ActionButton extends TextButton {
 
+    private static final float BUTTON_HEIGHT_SCALE = 1.5f;
+
     private boolean large = false;
 
     public ActionButton(String text, Skin skin) {
@@ -46,7 +48,7 @@ public class ActionButton extends TextButton {
     }
 
     @Override public float getPrefHeight() {
-        final float prefHeight = super.getPrefHeight();
+        final float prefHeight = super.getPrefHeight() * BUTTON_HEIGHT_SCALE;
 
         if (large && !isMultiRow()) {
             return prefHeight * 2;
