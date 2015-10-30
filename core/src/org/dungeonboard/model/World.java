@@ -44,6 +44,7 @@ public class World {
         //Check.notContained(playerCharacter, playerCharacters, "playerCharacters");
 
         playerCharacters.add(playerCharacter);
+        party.addMember(playerCharacter);
     }
 
     /**

@@ -47,13 +47,24 @@ public class Main extends ApplicationAdapter implements Context {
     private Label titleLabel;
     private Table rootContainer;
 
+    private final ArrayList<UiScreen> previousUiScreens = new ArrayList<UiScreen>();
+    private CharacterEditorScreen characterEditorScreen;
+    private Actor prevButton;
+    private Actor nextButton;
+
 
     @Override public void setScreen(UiScreen screen) {
+        setScreen(screen, true);
+    }
+
+    private void setScreen(UiScreen screen, boolean updateScreenHistory) {
         if (currentScreen != screen) {
             if (currentScreen != null) {
                 screenContainer.removeActor(currentScreen.getActor());
                 currentScreen.setActive(false);
             }
+
+            if (updateScreenHistory) previousUiScreens.add(currentScreen);
 
             currentScreen = screen;
 
@@ -61,6 +72,11 @@ public class Main extends ApplicationAdapter implements Context {
                 screenContainer.addActor(currentScreen.getActor());
                 currentScreen.setActive(true);
                 titleLabel.setText(currentScreen.getTitle());
+
+                boolean showPrevNextButtons = uiScreens.contains(screen);
+                if (nextButton != null) nextButton.setVisible(showPrevNextButtons);
+                if (prevButton != null) prevButton.setVisible(showPrevNextButtons);
+
             }
             else {
                 titleLabel.setText(StyleSettings.APPLICATION_NAME);
@@ -71,6 +87,10 @@ public class Main extends ApplicationAdapter implements Context {
 
     @Override public Skin getSkin() {
         return skin;
+    }
+
+    @Override public Stage getStage() {
+        return stage;
     }
 
     @Override public World getWorld() {
@@ -100,16 +120,28 @@ public class Main extends ApplicationAdapter implements Context {
         else {
             setScreen(null);
         }
-
     }
 
-    protected void addScreen(UiScreen screen) {
+    @Override public void switchScreenBack() {
+        if (!previousUiScreens.isEmpty()) {
+            final UiScreen previousScreen = previousUiScreens.remove(previousUiScreens.size() - 1);
+            setScreen(previousScreen, false);
+        }
+    }
+
+    @Override public UiScreen getCurrentScreen() {
+        return currentScreen;
+    }
+
+    protected <T extends UiScreen> T addScreen(T screen) {
         uiScreens.add(screen);
 
         // Select first screen to be added.
         if (currentScreen == null) {
             setScreen(screen);
         }
+
+        return screen;
     }
 
     public void create () {
@@ -122,7 +154,12 @@ public class Main extends ApplicationAdapter implements Context {
         // Add UI Screens
         addScreen(new InitiativeScreen(this));
         addScreen(new GroupScreen(this));
-        addScreen(new CharacterEditorScreen(this));
+        characterEditorScreen = new CharacterEditorScreen(this);
+    }
+
+    @Override public CharacterEditorScreen getCharacterEditScreen() {
+        if (characterEditorScreen == null) throw new IllegalStateException("Character edit screen not yet created");
+        return characterEditorScreen;
     }
 
     private void buildUi() {// Build ui
@@ -176,13 +213,15 @@ public class Main extends ApplicationAdapter implements Context {
         Table titleRow = new Table(skin);
         titleRow.setHeight(heightPc* TITLE_HEIGHT_PERCENT);
 
-        titleRow.add(createSwitchButton("Prev", false)).left();
+        prevButton = createSwitchButton("Prev", false);
+        titleRow.add(prevButton).left();
 
         titleLabel = new Label(StyleSettings.APPLICATION_NAME, skin, SCRIPT_FONT, TITLE_COLOR);
         titleLabel.setColor(Color.WHITE);
         titleRow.add(titleLabel).center().expandX();
 
-        titleRow.add(createSwitchButton("Next", true)).right();
+        nextButton = createSwitchButton("Next", true);
+        titleRow.add(nextButton).right();
 
         return titleRow;
     }

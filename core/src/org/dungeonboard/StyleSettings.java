@@ -4,11 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  *
@@ -40,11 +37,16 @@ public class StyleSettings {
     public static final Color IN_TURN_NAME_BACKGROUND = new Color(0.9f, 0.8f, 0.4f, 1);
     public static final Color MONSTER_COLOR = new Color(0, 0.8f, 0.2f, 1);
 
-    public static final String ICONS_PATH = "icons/";
+    private static final String ICONS_PATH_PREFIX = "icons/";
+    public static final String ICONS_PATH = ICONS_PATH_PREFIX +"characters/";
+    public static final String ITEM_ICONS_PATH = ICONS_PATH_PREFIX +"items/";
 
     private static Sound sound;
 
     public static final List<TextureAtlas.AtlasRegion> ICONS = new ArrayList<TextureAtlas.AtlasRegion>();
+    public static final List<TextureAtlas.AtlasRegion> ITEM_ICONS = new ArrayList<TextureAtlas.AtlasRegion>();
+
+    private static final Map<String, TextureAtlas.AtlasRegion> ICONS_MAP = new HashMap<String, TextureAtlas.AtlasRegion>();
 
     public static void playButtonPressSound() {
         getClickSound().play(0.5f);
@@ -63,12 +65,27 @@ public class StyleSettings {
             if (region.name.startsWith(ICONS_PATH)) {
                 StyleSettings.ICONS.add(region);
             }
+            else if (region.name.startsWith(ITEM_ICONS_PATH)) {
+                StyleSettings.ITEM_ICONS.add(region);
+            }
+
+            if (region.name.startsWith(ICONS_PATH_PREFIX)) {
+                ICONS_MAP.put(region.name.replace(ICONS_PATH_PREFIX, ""), region);
+            }
         }
     }
 
     public static String getRandomIconName() {
         Random random = new Random();
 
-        return ICONS.get(random.nextInt(ICONS.size())).name.replace(ICONS_PATH, "");
+        return ICONS.get(random.nextInt(ICONS.size())).name.replace(ICONS_PATH_PREFIX, "");
+    }
+
+    public static String getIconName(TextureAtlas.AtlasRegion icon) {
+        return icon.name.replace(ICONS_PATH_PREFIX, "");
+    }
+
+    public static TextureAtlas.AtlasRegion getIcon(String iconName) {
+        return ICONS_MAP.get(iconName);
     }
 }

@@ -129,6 +129,9 @@ public class CharacterEditor extends UiBase {
     }
 
     private Table createInitiativeEditor(Skin skin) {
+
+        // TODO: Make this into number editor component
+
         initiativeEditorTable = new Table(skin);
 
         // Initiative field

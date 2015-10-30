@@ -17,7 +17,7 @@ public class NonPlayerCharacters extends GameCharacter {
     public NonPlayerCharacters(String name, Color color) {
         super(name, color);
 
-        setIcon("skull");
+        setIcon("characters/skull");
     }
 
     @Override public boolean isPlayerCharacter() {

@@ -204,7 +204,7 @@ public class InitiativeScreen extends UiScreenBase {
         characterRow.addListener(new ClickListener() {
             @Override public void clicked(InputEvent event, float x, float y) {
                 //System.out.println("InitiativeScreen.clicked " + gameCharacter.getName());
-                getWorld().getCurrentEncounter().setSelectedCharacter(gameCharacter);
+                selectCharacter(gameCharacter);
             }
         });
 
@@ -240,6 +240,10 @@ public class InitiativeScreen extends UiScreenBase {
         characterToRowMapping.put(gameCharacter, characterRow);
 
         addCharacterRow(characterRow);
+    }
+
+    private void selectCharacter(GameCharacter gameCharacter) {
+        getWorld().getCurrentEncounter().setSelectedCharacter(gameCharacter);
     }
 
     private void focusCurrentCharacter(Encounter encounter) {
@@ -537,6 +541,23 @@ public class InitiativeScreen extends UiScreenBase {
             }
         }, false, false);
 
+        // Edit character
+        addAction(new EncounterActionBase(" Edit ", new Color(0, 0.2f, 0.8f, 1)) {
+            @Override public boolean availableFor(GameCharacter character,
+                                                  Encounter encounter,
+                                                  boolean hasTurn,
+                                                  boolean turnUsed,
+                                                  boolean betweenRounds) {
+
+                return getWorld().getCurrentEncounter().getSelectedCharacter() != null;
+            }
+
+            @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
+                editCharacter(character, false);
+            }
+
+        }, false, false);
+
         // Add character
         addAction(new EncounterActionBase("Add PC", new Color(0.8f, 0.7f, 0.3f, 1)) {
             @Override public boolean availableFor(GameCharacter character,
@@ -548,7 +569,10 @@ public class InitiativeScreen extends UiScreenBase {
             }
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
-                encounter.getParty().addMember(new PlayerCharacter("Adventurer"));
+                final PlayerCharacter adventurer = new PlayerCharacter("Adventurer");
+                encounter.getParty().addMember(adventurer);
+                editCharacter(adventurer, true);
+                selectCharacter(adventurer);
             }
         }, false, true);
 
@@ -563,7 +587,10 @@ public class InitiativeScreen extends UiScreenBase {
             }
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
-                encounter.addCharacter(new NonPlayerCharacters("Others"));
+                final NonPlayerCharacters other = new NonPlayerCharacters("Others");
+                encounter.addCharacter(other);
+                editCharacter(other, true);
+                selectCharacter(other);
             }
         }, false, true);
 
@@ -606,6 +633,7 @@ public class InitiativeScreen extends UiScreenBase {
 
 
     }
+
 
 
 }

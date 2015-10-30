@@ -19,7 +19,7 @@ public abstract class GameCharacter  {
     private boolean turnUsed;
     private boolean inReadyAction = false;
 
-    private String icon = "merchant_hat";
+    private String icon = "characters/adventurer_hat";
 
     private List<Item> items = new ArrayList<Item>();
 

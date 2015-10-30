@@ -4,21 +4,21 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import org.dungeonboard.Context;
 import org.dungeonboard.StyleSettings;
-import org.dungeonboard.model.World;
 import org.dungeonboard.actions.GameAction;
+import org.dungeonboard.model.GameCharacter;
+import org.dungeonboard.model.World;
 import org.dungeonboard.utils.ActionButton;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.dungeonboard.StyleSettings.SCRIPT_FONT;
-import static org.dungeonboard.StyleSettings.TITLE_COLOR;
 
 /**
  *
@@ -244,6 +244,12 @@ public abstract class UiScreenBase implements UiScreen {
 
     protected void onDeactivated() {
 
+    }
+
+    protected final void editCharacter(GameCharacter character, boolean newCharacter) {
+        final CharacterEditorScreen characterEditScreen = getContext().getCharacterEditScreen();
+        characterEditScreen.setEditedCharacter(character, newCharacter);
+        getContext().setScreen(characterEditScreen);
     }
 
 }
