@@ -37,27 +37,6 @@ public class CharacterEditorScreen extends UiScreenBase {
     private static final Color SELECTED_ICON_COLOR = Color.WHITE;
     private GameCharacter editedCharacter;
 
-    private final Color[] colors = new Color[]{
-            new Color(0.8f, 0f, 0f, 1f),
-            new Color(0.7f, 0.3f, 0f, 1f),
-            new Color(0.7f, 0.5f, 0f, 1f),
-            new Color(0.4f, 0.6f, 0f, 1f),
-            new Color(0.1f, 0.5f, 0f, 1f),
-            new Color(0.0f, 0.6f, 0.1f, 1f),
-            new Color(0.0f, 0.5f, 0.5f, 1f),
-            new Color(0.0f, 0.2f, 0.6f, 1f),
-            new Color(0.0f, 0f, 0.7f, 1f),
-            new Color(0.2f, 0f, 0.6f, 1f),
-            new Color(0.4f, 0f, 0.5f, 1f),
-            new Color(0.7f, 0f, 0.3f, 1f),
-            new Color(0.7f, 0.5f, 0.4f, 1f),
-            new Color(0.5f, 0.6f, 0.35f, 1f),
-            new Color(0.35f, 0.55f, 0.5f, 1f),
-            new Color(0.2f, 0.2f, 0.2f, 1f),
-            new Color(0.5f, 0.5f, 0.5f, 1f),
-            new Color(0.8f, 0.8f, 0.8f, 1f),
-    };
-
     private TextField nameEditor;
 
     private boolean updateUiOnCharacterChanges = true;
@@ -76,6 +55,7 @@ public class CharacterEditorScreen extends UiScreenBase {
     };
     private Table table;
     private Drawable glowBackgroundDrawable;
+    private Drawable iconBackground;
     private Map<String, ImageButton> iconButtons;
     private Map<Color, ImageButton> colorButtons;
     private TextureRegionDrawable color_icon;
@@ -113,9 +93,9 @@ public class CharacterEditorScreen extends UiScreenBase {
 
     @Override protected Actor createContent(World world, Skin skin, TextureAtlas textureAtlas) {
         glowBackgroundDrawable = new TextureRegionDrawable(textureAtlas.findRegion("selection_glow"));
+        iconBackground = new TextureRegionDrawable(textureAtlas.findRegion("selection_glow"));
         color_icon = new TextureRegionDrawable(textureAtlas.findRegion("color"));
         color_icon_selected = new TextureRegionDrawable(textureAtlas.findRegion("color_selected"));
-
 
         final float gap = Gdx.graphics.getHeight() * GAP_SIZE;
         table = new Table(skin).pad(gap, gap, gap, gap);
@@ -128,11 +108,13 @@ public class CharacterEditorScreen extends UiScreenBase {
         layoutTable.row();
 
         // TODO: Add base initiative editor for player characters if they want to autocast initiative, and a box to clear it.
+        /*
         // Base initiative
         layoutTable.add(new Label("Base Initiative", skin)).left().padRight(gap);
         layoutTable.add(new TextField("10", skin)).expandX().fillX();
 
         layoutTable.row();
+        */
 
         table.add(layoutTable).expandX().fillX().row();
 
@@ -204,7 +186,7 @@ public class CharacterEditorScreen extends UiScreenBase {
         float iconSize = tableWidth / columns;
         int column = 0;
         colorButtons = new HashMap<Color, ImageButton>();
-        for (final Color color : colors) {
+        for (final Color color : StyleSettings.ICON_COLORS) {
             // Add rows
             column %= columns;
             if (column == 0) table.row();

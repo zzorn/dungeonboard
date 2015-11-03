@@ -37,6 +37,28 @@ public class StyleSettings {
     public static final Color IN_TURN_NAME_BACKGROUND = new Color(0.9f, 0.8f, 0.4f, 1);
     public static final Color MONSTER_COLOR = new Color(0, 0.8f, 0.2f, 1);
 
+
+    public static final Color[] ICON_COLORS = new Color[]{
+            new Color(0.87f, 0.05f, 0.05f, 1f),
+            new Color(0.8f, 0.5f, 0f, 1f),
+            new Color(0.8f, 0.7f, 0f, 1f),
+            new Color(0.53f, 0.67f, 0.1f, 1f),
+            new Color(0.05f, 0.62f, 0.05f, 1f),
+            new Color(0.0f, 0.55f, 0.4f, 1f),
+            new Color(0.0f, 0.6f, 0.6f, 1f),
+            new Color(0.1f, 0.2f, 0.8f, 1f),
+            new Color(0.45f, 0f, 0.7f, 1f),
+            new Color(0.65f, 0f, 0.65f, 1f),
+            new Color(0.7f, 0f, 0.5f, 1f),
+            new Color(0.9f, 0.45f, 0.7f, 1f),
+            new Color(0.85f, 0.75f, 0.55f, 1f),
+            new Color(0.65f, 0.55f, 0.3f, 1f),
+            new Color(0.47f, 0.3f, 0.15f, 1f),
+            new Color(0.2f, 0.2f, 0.25f, 1f),
+            new Color(0.57f, 0.57f, 0.57f, 1f),
+            new Color(0.93f, 0.93f, 0.93f, 1f),
+    };
+
     private static final String ICONS_PATH_PREFIX = "icons/";
     public static final String ICONS_PATH = ICONS_PATH_PREFIX +"characters/";
     public static final String ITEM_ICONS_PATH = ICONS_PATH_PREFIX +"items/";
@@ -47,6 +69,8 @@ public class StyleSettings {
     public static final List<TextureAtlas.AtlasRegion> ITEM_ICONS = new ArrayList<TextureAtlas.AtlasRegion>();
 
     private static final Map<String, TextureAtlas.AtlasRegion> ICONS_MAP = new HashMap<String, TextureAtlas.AtlasRegion>();
+
+
 
     public static void playButtonPressSound() {
         getClickSound().play(0.5f);
