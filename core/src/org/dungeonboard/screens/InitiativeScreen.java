@@ -570,7 +570,7 @@ public class InitiativeScreen extends UiScreenBase {
 
             @Override public void doAction(World world, GameCharacter character, Encounter encounter) {
                 final PlayerCharacter adventurer = new PlayerCharacter("Adventurer");
-                encounter.getParty().addMember(adventurer);
+                world.addPlayerCharacter(adventurer);
                 editCharacter(adventurer, true);
                 selectCharacter(adventurer);
             }

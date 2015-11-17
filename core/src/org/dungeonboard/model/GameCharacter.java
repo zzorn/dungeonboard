@@ -1,5 +1,6 @@
 package org.dungeonboard.model;
 
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.Color;
 import org.dungeonboard.StyleSettings;
 
@@ -9,17 +10,26 @@ import java.util.List;
 /**
  *
  */
-public abstract class GameCharacter  {
+public abstract class GameCharacter implements Saveable {
+
+    private static final String NAME = ".name";
+    private static final String ICON = ".icon";
+    private static final String COLOR = ".color";
+    private static final String NUMBER_OF_ITEMS = ".numberOfItems";
+    private static final String ITEM = ".item.";
+    private static final String INITIATIVE = ".initiative";
+    private static final String DISABLED_FOR_ROUNDS = ".disabledForRounds";
+    private static final String TURN_USED = ".turnUsed";
+    private static final String IN_READY_ACTION = ".inReadyAction";
 
     private String name;
     private Color color;
+    private String icon = "characters/adventurer_hat";
 
     private int initiative = 20;
     private int disabledForRounds = 0;
     private boolean turnUsed;
     private boolean inReadyAction = false;
-
-    private String icon = "characters/adventurer_hat";
 
     private List<Item> items = new ArrayList<Item>();
 
@@ -154,6 +164,13 @@ public abstract class GameCharacter  {
         }
     }
 
+    public void removeAllItems() {
+        if (items != null) {
+            items.clear();
+            onChanged();
+        }
+    }
+
     public void onNewRound() {
         // Activate
         turnUsed = false;
@@ -204,5 +221,45 @@ public abstract class GameCharacter  {
         turnUsed = false;
         inReadyAction = false;
         onChanged();
+    }
+
+    @Override public void save(World world, Preferences preferences, String prefix) {
+        preferences.putString(prefix + NAME, name);
+        preferences.putString(prefix + ICON, icon);
+        preferences.putString(prefix + COLOR, color.toString());
+        preferences.putInteger(prefix + INITIATIVE, initiative);
+        preferences.putInteger(prefix + DISABLED_FOR_ROUNDS, disabledForRounds);
+        preferences.putBoolean(prefix + TURN_USED, turnUsed);
+        preferences.putBoolean(prefix + IN_READY_ACTION, inReadyAction);
+
+        // Add items
+        preferences.putInteger(prefix + NUMBER_OF_ITEMS, items.size());
+        for (int i = 0; i < items.size(); i++) {
+            preferences.putString(prefix + ITEM + i, items.get(i).getName());
+        }
+
+    }
+
+    @Override public void load(World world, Preferences preferences, String prefix) {
+
+        setName(preferences.getString(prefix + NAME, "Unknown"));
+        setIcon(preferences.getString(prefix + ICON, ""));
+        setColor(Color.valueOf(preferences.getString(prefix + COLOR, "FF0000")));
+
+        setInitiative(preferences.getInteger(prefix + INITIATIVE, 20));
+        setDisabledForRounds(preferences.getInteger(prefix + DISABLED_FOR_ROUNDS, 0));
+        setTurnUsed(preferences.getBoolean(prefix + TURN_USED, false));
+        setInReadyAction(preferences.getBoolean(prefix + IN_READY_ACTION, false));
+
+        // Load items
+        removeAllItems();
+        final int numberOfItems = preferences.getInteger(prefix + NUMBER_OF_ITEMS, 0);
+        for (int i = 0; i < numberOfItems; i++) {
+            final String itemId = preferences.getString(prefix + ITEM + i, "");
+            final Item item = world.getItem(itemId);
+            if (item != null) addItem(item);
+        }
+
+
     }
 }

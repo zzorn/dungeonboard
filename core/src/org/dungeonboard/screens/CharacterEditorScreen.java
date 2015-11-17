@@ -33,7 +33,7 @@ public class CharacterEditorScreen extends UiScreenBase {
     private static final int COLOR_ICON_WIDTH = 80;
     private static final int MIN_ICON_COLUMNS = 6;
     private static final int MIN_COLOR_ICON_COLUMNS = 6;
-    private static final Color UNSELECTED_ICON_COLOR = Color.GRAY;
+    private static final Color UNSELECTED_ICON_COLOR = new Color(0.45f, 0.45f, 0.45f, 1.0f);
     private static final Color SELECTED_ICON_COLOR = Color.WHITE;
     private GameCharacter editedCharacter;
 

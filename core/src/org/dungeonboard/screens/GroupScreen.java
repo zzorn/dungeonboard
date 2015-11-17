@@ -72,7 +72,7 @@ public class GroupScreen extends UiScreenBase {
         if (this.party != null) {
             this.party.removeListener(partyListener);
 
-            for (PlayerCharacter playerCharacter : party.getPlayerCharacters()) {
+            for (PlayerCharacter playerCharacter : party.getPartyMembers()) {
                 removePlayerFromGroupLayout(playerCharacter);
             }
         }
@@ -80,7 +80,7 @@ public class GroupScreen extends UiScreenBase {
         this.party = party;
 
         if (this.party != null) {
-            for (PlayerCharacter playerCharacter : party.getPlayerCharacters()) {
+            for (PlayerCharacter playerCharacter : party.getPartyMembers()) {
                 addPlayerToGroupLayout(playerCharacter);
             }
 

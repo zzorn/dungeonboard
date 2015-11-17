@@ -1,6 +1,8 @@
 package org.dungeonboard.model;
 
 
+import com.badlogic.gdx.Preferences;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -9,8 +11,15 @@ import java.util.List;
 /**
  * Encapsulates an encounter.
  */
-public class Encounter  {
+public class Encounter implements Saveable {
 
+    private static final String ROUND_NUMBER = ".roundNumber";
+    private static final String EXTRA_TURN_INITIATIVE_DROP_USED = ".extraTurnInitiativeDropUsed";
+    private static final String CURRENT_CHARACTER = ".currentCharacter";
+    private static final String SELECTED_CHARACTER = ".selectedCharacter";
+    private static final String NUMBER_OF_CHARACTERS = ".numberOfCharacters";
+    private static final String PLAYER_CHARACTER = ".playerCharacter.";
+    private static final String NON_PLAYER_CHARACTER = ".nonPlayerCharacter.";
     private List<GameCharacter> characters = new ArrayList<GameCharacter>();
     private int roundNumber = 0;
 
@@ -91,14 +100,18 @@ public class Encounter  {
                 stepToNextTurn(false);
             }
 
-            // TODO: Fix Kludge to avoid concurrent edition.
-            tempListeners.clear();
-            tempListeners.addAll(listeners);
-            for (EncounterListener listener : tempListeners) {
-                listener.onCharacterRemoved(this, character);
-            }
-            tempListeners.clear();
+            notifyCharacterRemoved(character);
         }
+    }
+
+    private void notifyCharacterRemoved(GameCharacter character) {
+        // TODO: Fix Kludge to avoid concurrent edition.
+        tempListeners.clear();
+        tempListeners.addAll(listeners);
+        for (EncounterListener listener : tempListeners) {
+            listener.onCharacterRemoved(this, character);
+        }
+        tempListeners.clear();
     }
 
     public Party getParty() {
@@ -137,7 +150,7 @@ public class Encounter  {
         if (this.party != null) {
             this.party.removeListener(partyListener);
 
-            for (PlayerCharacter playerCharacter : this.party.getPlayerCharacters()) {
+            for (PlayerCharacter playerCharacter : this.party.getPartyMembers()) {
                 removeCharacter(playerCharacter);
             }
         }
@@ -145,7 +158,7 @@ public class Encounter  {
         this.party = party;
 
         if (this.party != null) {
-            for (PlayerCharacter playerCharacter : this.party.getPlayerCharacters()) {
+            for (PlayerCharacter playerCharacter : this.party.getPartyMembers()) {
                 addCharacter(playerCharacter);
             }
 
@@ -161,7 +174,6 @@ public class Encounter  {
     public int getRoundNumber() {
         return roundNumber;
     }
-
 
     /**
      * Set the specified character as the currently active, even if they do not have the next initiative (used by ready actions).
@@ -321,4 +333,71 @@ public class Encounter  {
     public void dispose() {
         setParty(null);
     }
+
+    @Override public void save(World world, Preferences preferences, String prefix) {
+        preferences.putInteger(prefix + ROUND_NUMBER, roundNumber);
+        preferences.putBoolean(prefix + EXTRA_TURN_INITIATIVE_DROP_USED, extraTurnInitiativeDropUsed);
+
+        // Save characters
+        preferences.putInteger(prefix + NUMBER_OF_CHARACTERS, characters.size());
+        for (int i = 0; i < characters.size(); i++) {
+            GameCharacter character = characters.get(i);
+
+            if (character instanceof PlayerCharacter) {
+                preferences.putInteger(prefix + PLAYER_CHARACTER + i, world.getPlayerCharacterId((PlayerCharacter) character));
+            }
+            else {
+                character.save(world, preferences, prefix + NON_PLAYER_CHARACTER + i);
+            }
+        }
+
+        preferences.putInteger(prefix + CURRENT_CHARACTER, characters.indexOf(currentCharacter));
+        preferences.putInteger(prefix + SELECTED_CHARACTER, characters.indexOf(selectedCharacter));
+    }
+
+    @Override public void load(World world, Preferences preferences, String prefix) {
+        roundNumber = preferences.getInteger(prefix + ROUND_NUMBER, 0);
+        extraTurnInitiativeDropUsed = preferences.getBoolean(prefix + EXTRA_TURN_INITIATIVE_DROP_USED, false);
+
+        // Load characters
+        removeAllCharacters();
+        final int numberOfCharacters = preferences.getInteger(prefix + NUMBER_OF_CHARACTERS, 0);
+        for (int i = 0; i < numberOfCharacters; i++) {
+            final int playerId = preferences.getInteger(prefix + PLAYER_CHARACTER + i, -1);
+            if (playerId >= 0) {
+                // Get PC
+                addCharacter(world.getPlayerCharacter(playerId));
+            }
+            else {
+                // Load NPC
+                final NonPlayerCharacters nonPlayerCharacter = new NonPlayerCharacters();
+                nonPlayerCharacter.load(world, preferences, prefix + NON_PLAYER_CHARACTER + i);
+                addCharacter(nonPlayerCharacter);
+            }
+        }
+
+        // Get current and selected character
+        final int currentCharacterIndex = preferences.getInteger(prefix + CURRENT_CHARACTER, -1);
+        final int selectedCharacterIndex = preferences.getInteger(prefix + SELECTED_CHARACTER, -1);
+        currentCharacter = currentCharacterIndex < 0 ? null : characters.get(currentCharacterIndex);
+        selectedCharacter = selectedCharacterIndex < 0 ? null : characters.get(selectedCharacterIndex);
+
+        // Notify listeners
+        for (EncounterListener listener : listeners) {
+            listener.onTurnChanged(this);
+            listener.onRoundChanged(this);
+        }
+    }
+
+    private void removeAllCharacters() {
+        for (GameCharacter character : characters) {
+            character.removeListener(characterListener);
+            notifyCharacterRemoved(character);
+        }
+        characters.clear();
+        selectedCharacter = null;
+        currentCharacter = null;
+
+    }
+
 }

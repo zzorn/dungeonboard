@@ -1,6 +1,7 @@
 package org.dungeonboard.model;
 
 
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.utils.Array;
 
 import java.util.ArrayList;
@@ -9,18 +10,20 @@ import java.util.List;
 /**
  * Group of players on an adventure.
  */
-public class Party  {
+public class Party implements Saveable {
 
-    private final List<PlayerCharacter> playerCharacters = new ArrayList<PlayerCharacter>();
+    private static final String PARTY_SIZE = ".partySize";
+    private static final String PARTY_MEMBER = ".partyMember.";
+    private final List<PlayerCharacter> partyMembers = new ArrayList<PlayerCharacter>();
 
     private final Array<PartyListener> listeners = new Array<PartyListener>();
 
-    public List<PlayerCharacter> getPlayerCharacters() {
-        return playerCharacters;
+    public List<PlayerCharacter> getPartyMembers() {
+        return partyMembers;
     }
 
     public void addMember(PlayerCharacter character) {
-        playerCharacters.add(character);
+        partyMembers.add(character);
 
         for (PartyListener listener : listeners) {
             listener.onMemberAdded(character);
@@ -28,8 +31,18 @@ public class Party  {
     }
 
     public void removeMember(PlayerCharacter character) {
-        playerCharacters.remove(character);
+        partyMembers.remove(character);
+        notifyMemberRemoved(character);
+    }
 
+    public void clearParty() {
+        for (PlayerCharacter partyMember : partyMembers) {
+            notifyMemberRemoved(partyMember);
+        }
+        partyMembers.clear();
+    }
+
+    private void notifyMemberRemoved(PlayerCharacter character) {
         for (PartyListener listener : listeners) {
             listener.onMemberRemoved(character);
         }
@@ -41,5 +54,23 @@ public class Party  {
 
     public final void removeListener(PartyListener listener) {
         listeners.removeValue(listener, true);
+    }
+
+    @Override public void save(World world, Preferences preferences, String prefix) {
+        preferences.putInteger(prefix + PARTY_SIZE, partyMembers.size());
+        for (int i = 0; i < partyMembers.size(); i++) {
+            preferences.putInteger(prefix + PARTY_MEMBER + i,
+                                   world.getPlayerCharacterId(partyMembers.get(i)));
+        }
+    }
+
+    @Override public void load(World world, Preferences preferences, String prefix) {
+        clearParty();
+        final int partySize = preferences.getInteger(prefix + PARTY_SIZE, 0);
+        for (int i = 0; i < partySize; i++) {
+            final int memberId = preferences.getInteger(prefix + PARTY_MEMBER + i);
+            final PlayerCharacter playerCharacter = world.getPlayerCharacter(memberId);
+            addMember(playerCharacter);
+        }
     }
 }

@@ -2,6 +2,7 @@ package org.dungeonboard;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -31,6 +32,8 @@ import static org.dungeonboard.StyleSettings.TITLE_COLOR;
 public class Main extends ApplicationAdapter implements Context {
 
     public static final float TITLE_HEIGHT_PERCENT = 5;
+    private static final String PREFERENCES_NAME = "org.dungeonboard.defaultworld";
+    private static final String WORLD_NAME = "defaultWorld";
     private Stage stage;
     private Table screenContainer;
     // For debug drawing
@@ -162,7 +165,7 @@ public class Main extends ApplicationAdapter implements Context {
         return characterEditorScreen;
     }
 
-    private void buildUi() {// Build ui
+    private void buildUi() {
         final int width = Gdx.graphics.getWidth();
         final int height = Gdx.graphics.getHeight();
         final float heightPc = height * 0.01f;
@@ -238,10 +241,14 @@ public class Main extends ApplicationAdapter implements Context {
 
     private World createWorld() {
         World world = new World();
-        world.getCurrentEncounter().addCharacter(new PlayerCharacter("Adventurer1"));
-        world.getCurrentEncounter().addCharacter(new PlayerCharacter("Adventurer2"));
-        world.getCurrentEncounter().addCharacter(new PlayerCharacter("Adventurer3"));
+        world.addPlayerCharacter(new PlayerCharacter("Adventurer1"));
+        world.addPlayerCharacter(new PlayerCharacter("Adventurer2"));
+        world.addPlayerCharacter(new PlayerCharacter("Adventurer3"));
         world.getCurrentEncounter().addCharacter(new NonPlayerCharacters("Others"));
+
+        // Load existing world (if we find one)
+        loadWorld(world);
+
         return world;
     }
 
@@ -262,6 +269,16 @@ public class Main extends ApplicationAdapter implements Context {
         shapeRenderer.dispose();
     }
 
+    @Override public void pause() {
+        // Save current world
+        saveWorld(world);
+
+        super.pause();
+    }
+
+    @Override public void resume() {
+        super.resume();
+    }
 
     private ScrollPane createActorList() {
 
@@ -273,7 +290,6 @@ public class Main extends ApplicationAdapter implements Context {
 
         return actorScroll;
     }
-
 
     private BitmapFont createFont(final String path, int size) {
         FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal(path));
@@ -288,6 +304,18 @@ public class Main extends ApplicationAdapter implements Context {
         generator.dispose();
 
         return font;
+    }
+
+    private void loadWorld(World world) {
+        final Preferences preferences = Gdx.app.getPreferences(PREFERENCES_NAME);
+        world.load(world, preferences, WORLD_NAME);
+    }
+
+    private void saveWorld(final World world) {
+        final Preferences preferences = Gdx.app.getPreferences(PREFERENCES_NAME);
+        preferences.clear();
+        world.save(world, preferences, WORLD_NAME);
+        preferences.flush();
     }
 
 
