@@ -32,6 +32,7 @@ public class InitiativeScreen extends UiScreenBase {
     private GameCharacter selectedCharacter;
 
     private Map<GameCharacter, Table> characterToRowMapping = new HashMap<GameCharacter, Table>();
+    private Map<GameCharacter, Table> characterToItemsMapping = new HashMap<GameCharacter, Table>();
     private Drawable glowBackgroundDrawable;
     private Drawable boxBackgroundDrawable;
     private Drawable splatterBackgroundDrawable;
@@ -157,6 +158,7 @@ public class InitiativeScreen extends UiScreenBase {
     private void initCharacterList(World world) {// Add characters in encounter
         actorList.clear();
         characterToRowMapping.clear();
+        characterToItemsMapping.clear();
 
         for (GameCharacter gameCharacter : world.getCurrentEncounter().getCharacters()) {
             addCharacter(gameCharacter);
@@ -180,6 +182,12 @@ public class InitiativeScreen extends UiScreenBase {
         final String name = gameCharacter.getName();
         final Label nameLabel = new Label(name, skin, StyleSettings.SCRIPT_FONT, StyleSettings.DEFAULT_NAME_COLOR);
         characterRow.add(nameLabel).left().padLeft(widthPc * 1).expandX().fillX();
+
+        // Items
+        final Table itemTable = new Table();
+        characterToItemsMapping.put(gameCharacter, itemTable);
+        characterRow.add(itemTable);
+        updateCharacterItems(gameCharacter);
 
         //slider.addListener(stopTouchDown); // Stops touchDown events from propagating to the FlickScrollPane.
 
@@ -219,6 +227,9 @@ public class InitiativeScreen extends UiScreenBase {
 
                 // Update coloring
                 updateInitiativeRowColoring(characterRow, nameLabel, initiativeLabel, readyButton, gameCharacter);
+
+                // Update items
+                updateCharacterItems(gameCharacter);
             }
 
             @Override public void onInitiativeChanged(GameCharacter character) {
@@ -240,6 +251,19 @@ public class InitiativeScreen extends UiScreenBase {
         characterToRowMapping.put(gameCharacter, characterRow);
 
         addCharacterRow(characterRow);
+    }
+
+    private void updateCharacterItems(GameCharacter gameCharacter) {
+        final float widthPc = Gdx.graphics.getWidth() * 0.01f;
+        final Table itemsTable = characterToItemsMapping.get(gameCharacter);
+        final List<Item> items = gameCharacter.getItems();
+        itemsTable.clear();
+        for (Item item : items) {
+            final Drawable icon = new TextureRegionDrawable(StyleSettings.getIcon(item.getIcon()));
+            final ImageButton imageButton = new ImageButton(icon);
+            imageButton.getImage().setColor(item.getColor());
+            itemsTable.add(imageButton).size(widthPc*6.5f);
+        }
     }
 
     private void selectCharacter(GameCharacter gameCharacter) {
@@ -433,7 +457,7 @@ public class InitiativeScreen extends UiScreenBase {
         }, true, false);
 
         // Free turn
-        addAction(new EncounterActionBase("Drop "+ POINTS_TO_DROP_FOR_EXTRA_TURN +" and act again", new Color(0.2f, 0.8f, 0.2f, 1f)) {
+        addAction(new EncounterActionBase("Act Twice: -"+ POINTS_TO_DROP_FOR_EXTRA_TURN, new Color(0.2f, 0.8f, 0.2f, 1f)) {
             @Override public boolean availableFor(GameCharacter character,
                                                   Encounter encounter,
                                                   boolean hasTurn,

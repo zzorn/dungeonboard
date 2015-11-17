@@ -29,9 +29,11 @@ import java.util.Map;
 public class CharacterEditorScreen extends UiScreenBase {
 
     private static final float GAP_SIZE = 0.02f;
-    private static final int ICON_WIDTH = 128;
+    private static final int ICON_WIDTH = 100;
+    private static final int ITEM_ICON_WIDTH = 80;
     private static final int COLOR_ICON_WIDTH = 80;
     private static final int MIN_ICON_COLUMNS = 6;
+    private static final int MIN_ITEM_COLUMNS = 8;
     private static final int MIN_COLOR_ICON_COLUMNS = 6;
     private static final Color UNSELECTED_ICON_COLOR = new Color(0.45f, 0.45f, 0.45f, 1.0f);
     private static final Color SELECTED_ICON_COLOR = Color.WHITE;
@@ -57,6 +59,7 @@ public class CharacterEditorScreen extends UiScreenBase {
     private Drawable glowBackgroundDrawable;
     private Drawable iconBackground;
     private Map<String, ImageButton> iconButtons;
+    private Map<String, ImageButton> itemButtons;
     private Map<Color, ImageButton> colorButtons;
     private TextureRegionDrawable color_icon;
     private TextureRegionDrawable color_icon_selected;
@@ -128,8 +131,8 @@ public class CharacterEditorScreen extends UiScreenBase {
         table.add(createColorSelector(skin)).expandX().fillX().row();
 
         // Item selector
-//        table.add(new Label("Important items", skin)).left().row();
-        // TODO: Allow toggling predefined items on or off for this character
+        table.add(new Label("Important items", skin)).left().row();
+        table.add(createItemSelector(skin)).expandX().fillX().row();
 
         setupActions();
 
@@ -211,6 +214,44 @@ public class CharacterEditorScreen extends UiScreenBase {
         return scroll;
     }
 
+    private ScrollPane createItemSelector(Skin skin) {
+        final float gap = Gdx.graphics.getHeight() * GAP_SIZE;
+
+        Table itemTable = new Table(skin);
+        final float tableWidth = Gdx.graphics.getWidth() - gap * 2;
+        int columns = (int) Math.max(MIN_ITEM_COLUMNS, tableWidth / ITEM_ICON_WIDTH);
+        float iconSize = tableWidth / columns;
+        int column = 0;
+        itemButtons = new HashMap<String, ImageButton>();
+
+        for (final Item item : getWorld().getItems()) {
+            /*
+            // Add rows
+            column %= columns;
+            if (column == 0) itemTable.row();
+            column++;
+            */
+
+            // Add item buttons
+            final Drawable unselected = new TextureRegionDrawable(StyleSettings.getIcon(item.getIcon()));
+            final ImageButton imageButton = new ImageButton(unselected);
+            final String itemName = item.getName();
+            itemButtons.put(itemName, imageButton);
+            imageButton.getImage().setColor(UNSELECTED_ICON_COLOR);
+            itemTable.add(imageButton).size(iconSize, iconSize);
+            imageButton.addListener(new ClickListener() {
+                @Override public void clicked(InputEvent event, float x, float y) {
+                    editedCharacter.toggleItem(item);
+                    updateSelectedItems();
+                }
+            });
+        }
+        ScrollPane itemScroll = new ScrollPane(itemTable, skin);
+        itemScroll.setScrollingDisabled(false, true);
+        itemScroll.setHeight(1 * iconSize);
+        return itemScroll;
+    }
+
     private void updateSelectedIcon() {
         for (ImageButton iconButton : iconButtons.values()) {
             iconButton.getImage().setColor(UNSELECTED_ICON_COLOR);
@@ -221,6 +262,21 @@ public class CharacterEditorScreen extends UiScreenBase {
             //final Color selectedIconColor = SELECTED_ICON_COLOR;
             final Color selectedIconColor = editedCharacter.getColor();
             currentIconButton.getImage().setColor(selectedIconColor);
+        }
+    }
+
+    private void updateSelectedItems() {
+        for (ImageButton itemButton : itemButtons.values()) {
+            itemButton.getImage().setColor(UNSELECTED_ICON_COLOR);
+        }
+
+        for (Item item : editedCharacter.getItems()) {
+            final ImageButton selectedItemButton = itemButtons.get(item.getName());
+            if (selectedItemButton != null) {
+                //final Color selectedIconColor = SELECTED_ICON_COLOR;
+                final Color selectedIconColor = item.getColor();
+                selectedItemButton.getImage().setColor(selectedIconColor);
+            }
         }
     }
 
@@ -350,8 +406,8 @@ public class CharacterEditorScreen extends UiScreenBase {
                 nameEditor.setDisabled(false);
 
                 updateSelectedIcon();
-
                 updateSelectedColor();
+                updateSelectedItems();
             }
         }
     }

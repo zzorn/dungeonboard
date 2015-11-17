@@ -1,6 +1,7 @@
 package org.dungeonboard.model;
 
 import com.badlogic.gdx.Preferences;
+import com.badlogic.gdx.graphics.Color;
 import org.dungeonboard.actions.ActionRegistry;
 
 import java.util.ArrayList;
@@ -24,9 +25,9 @@ public class World implements Saveable {
     private final Encounter encounter = new Encounter();
 
     public World() {
-        items.add(new Item("Torch", "torch.png"));
-        items.add(new Item("Lantern", "lantern.png"));
-        items.add(new Item("Shield", "buckler.png"));
+        items.add(new Item("Torch", "items/torch", new Color(1f, 0.8f, 0.4f, 1f)));
+        items.add(new Item("Lantern", "items/lantern", new Color(1f, 0.9f, 0.6f, 1f)));
+        items.add(new Item("Shield", "items/buckler", new Color(0.7f, 0.5f, 0.2f, 1f)));
 
         encounter.setParty(party);
     }
@@ -70,6 +71,10 @@ public class World implements Saveable {
 
     public int getPlayerCharacterId(PlayerCharacter playerCharacter) {
         return playerCharacters.indexOf(playerCharacter);
+    }
+
+    public List<Item> getItems() {
+        return items;
     }
 
     public Item getItem(String itemId) {

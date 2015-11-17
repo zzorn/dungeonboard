@@ -31,7 +31,7 @@ public abstract class GameCharacter implements Saveable {
     private boolean turnUsed;
     private boolean inReadyAction = false;
 
-    private List<Item> items = new ArrayList<Item>();
+    private final List<Item> items = new ArrayList<Item>();
 
     private List<CharacterListener> listeners = new ArrayList<CharacterListener>();
 
@@ -149,8 +149,22 @@ public abstract class GameCharacter implements Saveable {
         //Check.notNull(item, "item");
         //Check.notContained(item, items, "items");
 
-        items.add(item);
-        onChanged();
+        if (!items.contains(item)) {
+            items.add(item);
+            onChanged();
+        }
+    }
+
+    /**
+     * @param item Item to toggle.
+     */
+    public final void toggleItem(Item item) {
+        if (items.contains(item)) {
+            removeItem(item);
+        }
+        else {
+            addItem(item);
+        }
     }
 
 
@@ -158,17 +172,15 @@ public abstract class GameCharacter implements Saveable {
      * @param item Item to remove.
      */
     public final void removeItem(Item item) {
-        if (items != null) {
+        if (items.contains(item)) {
             items.remove(item);
             onChanged();
         }
     }
 
     public void removeAllItems() {
-        if (items != null) {
-            items.clear();
-            onChanged();
-        }
+        items.clear();
+        onChanged();
     }
 
     public void onNewRound() {
